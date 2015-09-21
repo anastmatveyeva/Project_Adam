@@ -8,5 +8,4 @@
     <string name="sign_in">Sign in with VK</string>
     <string name="logout">Logout</string>
     <string name="continue_using_app">Continue using application</string>
-    <string name="auth_access_denied">Access Denied</string>
 </resources>
