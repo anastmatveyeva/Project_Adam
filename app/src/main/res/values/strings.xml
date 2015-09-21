@@ -1,4 +1,12 @@
 <resources>
-    <string name="app_name">Project Adam</string>
+    <string name="app_name" translatable="false">Project Adam</string>
     <string name="action_settings">Settings</string>
+
+    <string name="access_token_invalidated">AccessToken invalidated</string>
+    <string name="title_activity_login" translatable="false">LoginActivity</string>
+
+    <string name="sign_in">Sign in with VK</string>
+    <string name="logout">Logout</string>
+    <string name="continue_using_app">Continue using application</string>
+    <string name="auth_access_denied">Access Denied</string>
 </resources>
