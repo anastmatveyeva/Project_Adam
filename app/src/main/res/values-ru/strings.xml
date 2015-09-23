@@ -3,7 +3,9 @@
     <string name="access_token_invalidated">AccessToken недействителен</string>
     <string name="action_settings">Параметры</string>
     <string name="auth_access_denied">Доступ запрещён</string>
-    <string name="continue_using_app">Вернуться к приложению</string>
     <string name="logout">Выход из аккаунта</string>
     <string name="sign_in">Авторизация через VK</string>
+    <string name="action_login">Вход в VK</string>
+    <string name="action_logout">Выход из VK</string>
+    <string name="action_my_audio">Мои аудиозаписи</string>
 </resources>
