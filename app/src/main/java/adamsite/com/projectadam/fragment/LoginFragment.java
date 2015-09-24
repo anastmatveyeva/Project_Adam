@@ -13,6 +13,10 @@ import adamsite.com.projectadam.R;
 
 public class LoginFragment extends android.support.v4.app.Fragment {
 
+    public interface onShowLogin {
+        void showLoginFragment();
+    }
+
     public LoginFragment() {
         super();
     }

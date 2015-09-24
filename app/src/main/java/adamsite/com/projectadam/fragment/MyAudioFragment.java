@@ -21,7 +21,8 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
 
     private TextView tv;
 
-    public interface onSearch {
+    public interface onShowMyAudio {
+        void showMyAudioFragment();
         void audioSearch(String query);
     }
 

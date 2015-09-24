@@ -13,9 +13,16 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.vk.sdk.VKAccessToken;
+import com.vk.sdk.VKCallback;
+import com.vk.sdk.VKSdk;
+import com.vk.sdk.api.VKError;
+
+import adamsite.com.projectadam.fragment.LoginFragment;
+import adamsite.com.projectadam.fragment.LogoutFragment;
 import adamsite.com.projectadam.fragment.MyAudioFragment;
 
-public class MainActivity extends AppCompatActivity implements MyAudioFragment.onSearch {
+public class MainActivity extends AppCompatActivity implements MyAudioFragment.onShowMyAudio, LoginFragment.onShowLogin, LogoutFragment.onShowLogout {
 
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
@@ -30,10 +37,7 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
         initNavigationView();
         initSearchView();
 
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.container, new MyAudioFragment(), Const.MY_AUDIO_FRAGMENT)
-                .commit();
+        wakeUpSession();
     }
 
     private void initToolbar() {
@@ -80,21 +84,14 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
             public boolean onNavigationItemSelected(MenuItem menuItem) {
                 menuItem.setChecked(true);
                 switch (menuItem.getItemId()) {
+                    case R.id.action_my_audio:
+                        showMyAudioFragment();
+                        break;
                     case R.id.action_vk_login:
-                        startActivity(
-                                new Intent(getApplicationContext(), LoginActivity.class)
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                                        .putExtra(Const.FROM_ANOTHER_ACTIVITY, this.toString())
-                        );
-                        finish();
+                        showLoginFragment();
                         break;
                     case R.id.action_vk_logout:
-                        startActivity(
-                                new Intent(getApplicationContext(), LoginActivity.class)
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                                        .putExtra(Const.FROM_ANOTHER_ACTIVITY, this.toString())
-                        );
-                        finish();
+                        showLogoutFragment();
                         break;
                 }
                 drawerLayout.closeDrawer(GravityCompat.START);
@@ -103,11 +100,80 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
         });
     }
 
+    private void wakeUpSession() {
+        VKSdk.wakeUpSession(this, new VKCallback<VKSdk.LoginState>() {
+            @Override
+            public void onResult(VKSdk.LoginState res) {
+                switch (res) {
+                    case LoggedOut:
+                        showLoginFragment();
+                        break;
+                    case LoggedIn:
+                        showMyAudioFragment();
+                        break;
+                    case Pending:
+                        break;
+                    case Unknown:
+                        break;
+                }
+            }
+
+            @Override
+            public void onError(VKError error) {
+
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        VKCallback<VKAccessToken> callback = new VKCallback<VKAccessToken>() {
+            @Override
+            public void onResult(VKAccessToken res) {
+                // User passed Authorization
+                showMyAudioFragment();
+            }
+
+            @Override
+            public void onError(VKError error) {
+                // User didn't pass Authorization
+            }
+        };
+
+        if (!VKSdk.onActivityResult(requestCode, resultCode, data, callback)) {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
     @Override
     public void audioSearch(String query) {
         MyAudioFragment myAudioFragment = (MyAudioFragment) getSupportFragmentManager().findFragmentByTag(Const.MY_AUDIO_FRAGMENT);
         if (myAudioFragment != null)
             myAudioFragment.audioSearch(query);
+    }
+
+    @Override
+    public void showMyAudioFragment() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.container, new MyAudioFragment(), Const.MY_AUDIO_FRAGMENT)
+                .commit();
+    }
+
+    @Override
+    public void showLoginFragment() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.container, new LoginFragment(), Const.LOGIN_FRAGMENT)
+                .commit();
+    }
+
+    @Override
+    public void showLogoutFragment() {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.container, new LogoutFragment(), Const.LOGOUT_FRAGMENT)
+                .commit();
     }
 
     @Override

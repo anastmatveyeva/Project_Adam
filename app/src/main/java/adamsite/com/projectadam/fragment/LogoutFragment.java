@@ -8,10 +8,14 @@ import android.view.ViewGroup;
 
 import com.vk.sdk.VKSdk;
 
-import adamsite.com.projectadam.LoginActivity;
+import adamsite.com.projectadam.MainActivity;
 import adamsite.com.projectadam.R;
 
 public class LogoutFragment extends android.support.v4.app.Fragment {
+
+    public interface onShowLogout {
+        void showLogoutFragment();
+    }
 
     public LogoutFragment() {
         super();
@@ -25,7 +29,7 @@ public class LogoutFragment extends android.support.v4.app.Fragment {
             public void onClick(View view) {
                 VKSdk.logout();
                 if (!VKSdk.isLoggedIn())
-                    ((LoginActivity) getActivity()).showLogin();
+                    ((MainActivity) getActivity()).showLoginFragment();
             }
         });
         return v;
