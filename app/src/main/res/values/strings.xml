@@ -9,7 +9,6 @@
     <string name="drawer_close" translatable="false">Drawer Close</string>
 
     <string name="access_token_invalidated">AccessToken invalidated</string>
-    <string name="title_activity_login" translatable="false">LoginActivity</string>
 
     <string name="sign_in">Sign in with VK</string>
     <string name="logout">Logout</string>
