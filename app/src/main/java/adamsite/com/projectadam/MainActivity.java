@@ -3,9 +3,7 @@ package adamsite.com.projectadam;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -14,21 +12,14 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.vk.sdk.api.VKApi;
-import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKParameters;
-import com.vk.sdk.api.VKRequest;
-import com.vk.sdk.api.VKResponse;
+import adamsite.com.projectadam.fragment.MyAudioFragment;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MyAudioFragment.onSearch {
 
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
     private SearchView searchView;
-    private TextView tv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,9 +29,11 @@ public class MainActivity extends AppCompatActivity {
         initToolbar();
         initNavigationView();
         initSearchView();
-        initFAB();
 
-        tv = (TextView) findViewById(R.id.tv);
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.container, new MyAudioFragment(), Const.MY_AUDIO_FRAGMENT)
+                .commit();
     }
 
     private void initToolbar() {
@@ -55,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                audioSearch();
+                audioSearch(searchView.getQuery().toString());
                 return false;
             }
 
@@ -110,41 +103,12 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void initFAB() {
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+    @Override
+    public void audioSearch(String query) {
+        MyAudioFragment myAudioFragment = (MyAudioFragment) getSupportFragmentManager().findFragmentByTag(Const.MY_AUDIO_FRAGMENT);
+        if (myAudioFragment != null)
+            myAudioFragment.audioSearch(query);
     }
-
-    private void audioSearch() {
-        VKRequest request = VKApi.audio().search(VKParameters.from(
-                Const.Q, searchView.getQuery().toString(),
-                Const.AUTO_COMPLETE, 1,
-                Const.SORT, 2,
-                Const.OFFSET, 0,
-                Const.COUNT, 30
-        ));
-        request.executeWithListener(audioSearchRL);
-    }
-
-    VKRequest.VKRequestListener audioSearchRL = new VKRequest.VKRequestListener() {
-        @Override
-        public void onComplete(VKResponse response) {
-            //super.onComplete(response);
-            tv.setText(response.json.toString());
-        }
-
-        @Override
-        public void onError(VKError error) {
-            //super.onError(error);
-            Toast.makeText(getApplicationContext(), error.toString(), Toast.LENGTH_LONG).show();
-        }
-    };
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {

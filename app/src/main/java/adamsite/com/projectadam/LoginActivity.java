@@ -10,23 +10,18 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKCallback;
-import com.vk.sdk.VKScope;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKError;
 
-public class LoginActivity extends AppCompatActivity {
+import adamsite.com.projectadam.fragment.LoginFragment;
+import adamsite.com.projectadam.fragment.LogoutFragment;
 
-    private static final String[] sMyScope = new String[]
-    {
-        VKScope.AUDIO
-    };
+public class LoginActivity extends AppCompatActivity {
 
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
@@ -124,17 +119,17 @@ public class LoginActivity extends AppCompatActivity {
     public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
     }
 
-    private void showLogin() {
+    public void showLogin() {
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.container, new LoginFragment())
+                .replace(R.id.container, new LoginFragment(), Const.LOGIN_FRAGMENT)
                 .commit();
     }
 
-    private void showLogout() {
+    public void showLogout() {
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.container, new LogoutFragment())
+                .replace(R.id.container, new LogoutFragment(), Const.LOGOUT_FRAGMENT)
                 .commit();
     }
 
@@ -191,47 +186,6 @@ public class LoginActivity extends AppCompatActivity {
 
         if (!VKSdk.onActivityResult(requestCode, resultCode, data, callback)) {
             super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-
-    public static class LoginFragment extends android.support.v4.app.Fragment {
-
-        public LoginFragment() {
-            super();
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View v = inflater.inflate(R.layout.fragment_login, container, false);
-            v.findViewById(R.id.sign_in_button).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    VKSdk.login(getActivity(), sMyScope);
-                }
-            });
-            return v;
-        }
-    }
-
-    public static class LogoutFragment extends android.support.v4.app.Fragment {
-
-        public LogoutFragment() {
-            super();
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View v = inflater.inflate(R.layout.fragment_logout, container, false);
-            v.findViewById(R.id.logout).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    VKSdk.logout();
-                    if (!VKSdk.isLoggedIn()) {
-                        ((LoginActivity) getActivity()).showLogin();
-                    }
-                }
-            });
-            return v;
         }
     }
 }
