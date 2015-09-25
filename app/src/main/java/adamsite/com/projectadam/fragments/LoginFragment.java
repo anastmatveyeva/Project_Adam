@@ -1,4 +1,4 @@
-package adamsite.com.projectadam.fragment;
+package adamsite.com.projectadam.fragments;
 
 
 import android.os.Bundle;
@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import com.vk.sdk.VKSdk;
 
 import adamsite.com.projectadam.Const;
+import adamsite.com.projectadam.MainActivity;
 import adamsite.com.projectadam.R;
 import adamsite.com.projectadam.interfaces.FragmentInterface;
 
@@ -31,6 +32,7 @@ public class LoginFragment extends android.support.v4.app.Fragment implements Fr
             @Override
             public void onClick(View view) {
                 VKSdk.login(getActivity(), Const.SCOPE);
+                ((MainActivity) getActivity()).navViewItemVisibility(true);
             }
         });
 

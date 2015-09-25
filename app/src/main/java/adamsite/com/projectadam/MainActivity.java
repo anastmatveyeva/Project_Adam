@@ -18,14 +18,15 @@ import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKError;
 
-import adamsite.com.projectadam.fragment.LoginFragment;
-import adamsite.com.projectadam.fragment.LogoutFragment;
-import adamsite.com.projectadam.fragment.MyAudioFragment;
+import adamsite.com.projectadam.fragments.LoginFragment;
+import adamsite.com.projectadam.fragments.LogoutFragment;
+import adamsite.com.projectadam.fragments.MyAudioFragment;
 
 public class MainActivity extends AppCompatActivity implements MyAudioFragment.onShowMyAudio, LoginFragment.onShowLogin, LogoutFragment.onShowLogout {
 
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
     private SearchView searchView;
 
     @Override
@@ -55,12 +56,13 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
             @Override
             public boolean onQueryTextSubmit(String query) {
                 audioSearch(searchView.getQuery().toString());
-                return false;
+                return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                return false;
+                myAudioSearch(searchView.getQuery().toString());
+                return true;
             }
         });
     }
@@ -80,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
         drawerToggle.setDrawerIndicatorEnabled(true);
         drawerLayout.setDrawerListener(drawerToggle);
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.navigation_view);
+        navigationView = (NavigationView) findViewById(R.id.navigation_view);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(MenuItem menuItem) {
@@ -109,9 +111,11 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
                 switch (res) {
                     case LoggedOut:
                         showLoginFragment();
+                        navViewItemVisibility(false);
                         break;
                     case LoggedIn:
                         showMyAudioFragment();
+                        navViewItemVisibility(true);
                         break;
                     case Pending:
                         break;
@@ -125,6 +129,16 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
 
             }
         });
+    }
+
+    public void navViewItemVisibility(boolean isLoggedIn) {
+        if (isLoggedIn) {
+            navigationView.getMenu().findItem(R.id.action_vk_login).setVisible(false);
+            navigationView.getMenu().findItem(R.id.action_vk_logout).setVisible(true);
+        } else {
+            navigationView.getMenu().findItem(R.id.action_vk_login).setVisible(true);
+            navigationView.getMenu().findItem(R.id.action_vk_logout).setVisible(false);
+        }
     }
 
     @Override
@@ -145,6 +159,13 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
         if (!VKSdk.onActivityResult(requestCode, resultCode, data, callback)) {
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    @Override
+    public void myAudioSearch(String query) {
+        MyAudioFragment myAudioFragment = (MyAudioFragment) getSupportFragmentManager().findFragmentByTag(Const.MY_AUDIO_FRAGMENT);
+        if (myAudioFragment != null)
+            myAudioFragment.myAudioSearch(query);
     }
 
     @Override

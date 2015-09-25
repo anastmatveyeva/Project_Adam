@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import adamsite.com.projectadam.R;
-import adamsite.com.projectadam.VKAudio;
+import adamsite.com.projectadam.model.VKAudio;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
 
@@ -48,6 +48,57 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return audioList.size();
     }
 
+    public void animateTo(List<VKAudio> audioList) {
+        applyAndAnimateRemovals(audioList);
+        applyAndAnimateAdditions(audioList);
+        applyAndAnimateMovedItems(audioList);
+    }
+
+    private void applyAndAnimateRemovals(List<VKAudio> newAudios) {
+        for (int i = audioList.size() - 1; i >= 0; i--) {
+            final VKAudio model = audioList.get(i);
+            if (!newAudios.contains(model)) {
+                removeItem(i);
+            }
+        }
+    }
+
+    private void applyAndAnimateAdditions(List<VKAudio> newAudios) {
+        for (int i = 0, count = newAudios.size(); i < count; i++) {
+            final VKAudio model = newAudios.get(i);
+            if (!audioList.contains(model)) {
+                addItem(i, model);
+            }
+        }
+    }
+
+    private void applyAndAnimateMovedItems(List<VKAudio> newAudios) {
+        for (int toPosition = newAudios.size() - 1; toPosition >= 0; toPosition--) {
+            final VKAudio model = newAudios.get(toPosition);
+            final int fromPosition = audioList.indexOf(model);
+            if (fromPosition >= 0 && fromPosition != toPosition) {
+                moveItem(fromPosition, toPosition);
+            }
+        }
+    }
+
+    public VKAudio removeItem(int position) {
+        final VKAudio model = audioList.remove(position);
+        notifyItemRemoved(position);
+        return model;
+    }
+
+    public void addItem(int position, VKAudio audio) {
+        audioList.add(position, audio);
+        notifyItemInserted(position);
+    }
+
+    public void moveItem(int fromPosition, int toPosition) {
+        final VKAudio audio = audioList.remove(fromPosition);
+        audioList.add(toPosition, audio);
+        notifyItemMoved(fromPosition, toPosition);
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         private TextView tvAudioTitle;
@@ -62,7 +113,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     public static class RecyclerViewItemDecoration extends RecyclerView.ItemDecoration {
 
-        private final int VERTICAL_ITEM_SPACE = 24;
+//        private final int VERTICAL_ITEM_SPACE = 24;
 
         private final int[] ATTRS = new int[]{android.R.attr.listDivider};
         private Drawable divider;

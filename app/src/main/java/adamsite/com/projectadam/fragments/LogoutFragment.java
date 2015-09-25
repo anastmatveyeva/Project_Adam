@@ -1,4 +1,4 @@
-package adamsite.com.projectadam.fragment;
+package adamsite.com.projectadam.fragments;
 
 
 import android.os.Bundle;
@@ -30,8 +30,10 @@ public class LogoutFragment extends android.support.v4.app.Fragment implements F
             @Override
             public void onClick(View view) {
                 VKSdk.logout();
-                if (!VKSdk.isLoggedIn())
+                if (!VKSdk.isLoggedIn()) {
                     ((MainActivity) getActivity()).showLoginFragment();
+                    ((MainActivity) getActivity()).navViewItemVisibility(false);
+                }
             }
         });
 

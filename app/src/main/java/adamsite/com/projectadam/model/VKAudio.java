@@ -1,4 +1,4 @@
-package adamsite.com.projectadam;
+package adamsite.com.projectadam.model;
 
 public class VKAudio {
 
