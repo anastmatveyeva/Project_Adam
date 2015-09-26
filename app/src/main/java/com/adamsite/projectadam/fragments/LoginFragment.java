@@ -1,4 +1,4 @@
-package adamsite.com.projectadam.fragments;
+package com.adamsite.projectadam.fragments;
 
 
 import android.os.Bundle;
@@ -10,10 +10,10 @@ import android.view.ViewGroup;
 
 import com.vk.sdk.VKSdk;
 
-import adamsite.com.projectadam.Const;
-import adamsite.com.projectadam.MainActivity;
-import adamsite.com.projectadam.R;
-import adamsite.com.projectadam.interfaces.FragmentInterface;
+import com.adamsite.projectadam.Const;
+import com.adamsite.projectadam.MainActivity;
+import com.adamsite.projectadam.R;
+import com.adamsite.projectadam.interfaces.FragmentInterface;
 
 public class LoginFragment extends android.support.v4.app.Fragment implements FragmentInterface {
 

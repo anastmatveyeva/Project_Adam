@@ -1,8 +1,11 @@
-package adamsite.com.projectadam;
+package com.adamsite.projectadam;
 
 import com.vk.sdk.VKScope;
 
 public class Const {
+
+    //logTag
+    public static final String LOG_TAG = "PROJECT_ADAM";
 
     //scope
     public static final String[] SCOPE = new String[]

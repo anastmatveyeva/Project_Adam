@@ -1,4 +1,4 @@
-package adamsite.com.projectadam.interfaces;
+package com.adamsite.projectadam.interfaces;
 
 public interface FragmentInterface {
     void toolbarSetTitle();

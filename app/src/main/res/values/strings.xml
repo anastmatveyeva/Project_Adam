@@ -14,4 +14,8 @@
     <string name="logout">Logout</string>
     <string name="auth_access_denied">Access Denied</string>
 
+    <string name="error">Error</string>
+
+    <string name="iv_play_pause_content_description">Play/Pause indicator</string>
+
 </resources>

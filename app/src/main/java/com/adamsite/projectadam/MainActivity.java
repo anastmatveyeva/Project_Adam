@@ -1,4 +1,4 @@
-package adamsite.com.projectadam;
+package com.adamsite.projectadam;
 
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -10,6 +10,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -18,9 +19,9 @@ import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKError;
 
-import adamsite.com.projectadam.fragments.LoginFragment;
-import adamsite.com.projectadam.fragments.LogoutFragment;
-import adamsite.com.projectadam.fragments.MyAudioFragment;
+import com.adamsite.projectadam.fragments.LoginFragment;
+import com.adamsite.projectadam.fragments.LogoutFragment;
+import com.adamsite.projectadam.fragments.MyAudioFragment;
 
 public class MainActivity extends AppCompatActivity implements MyAudioFragment.onShowMyAudio, LoginFragment.onShowLogin, LogoutFragment.onShowLogout {
 
@@ -126,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
 
             @Override
             public void onError(VKError error) {
-
+                Log.e(Const.LOG_TAG, error.toString());
             }
         });
     }

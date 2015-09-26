@@ -1,4 +1,4 @@
-package adamsite.com.projectadam;
+package com.adamsite.projectadam;
 
 import android.content.Intent;
 import android.widget.Toast;

@@ -1,4 +1,4 @@
-package adamsite.com.projectadam;
+package com.adamsite.projectadam;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

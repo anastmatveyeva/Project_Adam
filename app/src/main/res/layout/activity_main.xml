@@ -23,6 +23,7 @@
                 android:layout_height="?attr/actionBarSize"
                 android:background="?attr/colorPrimary"
                 android:theme="@style/AppTheme.AppBarOverlay"
+                app:layout_scrollFlags="scroll|enterAlways"
                 app:popupTheme="@style/AppTheme.PopupOverlay">
 
                 <android.support.v7.widget.SearchView
@@ -30,7 +31,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:theme="@style/AppTheme.AppBarOverlay"/>
+                    android:theme="@style/AppTheme.AppBarOverlay" />
 
             </android.support.v7.widget.Toolbar>
 
@@ -40,7 +41,7 @@
             android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="?attr/actionBarSize"/>
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     </android.support.design.widget.CoordinatorLayout>
 
@@ -49,7 +50,7 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/menu_navigation"
-        app:headerLayout="@layout/navigation_header"/>
+        app:headerLayout="@layout/navigation_header"
+        app:menu="@menu/menu_navigation" />
 
 </android.support.v4.widget.DrawerLayout>
