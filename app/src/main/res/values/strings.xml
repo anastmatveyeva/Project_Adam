@@ -3,10 +3,10 @@
     <string name="action_settings">Settings</string>
     <string name="action_login">VK Login</string>
     <string name="action_logout">VK Logout</string>
-    <string name="action_my_audio">My audio</string>
+    <string name="action_my_audio">My Audio</string>
 
-    <string name="drawer_open" translatable="false">Drawer Open</string>
-    <string name="drawer_close" translatable="false">Drawer Close</string>
+    <string name="drawer_open" translatable="false">Open navigation drawer</string>
+    <string name="drawer_close" translatable="false">Close navigation drawer</string>
 
     <string name="access_token_invalidated">AccessToken invalidated</string>
 
@@ -17,5 +17,6 @@
     <string name="error">Error</string>
 
     <string name="iv_play_pause_content_description">Play/Pause indicator</string>
+    <string name="action_search">Search</string>
 
 </resources>

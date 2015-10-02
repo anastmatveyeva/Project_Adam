@@ -15,8 +15,8 @@ import android.widget.Toast;
 
 import com.adamsite.projectadam.Const;
 import com.adamsite.projectadam.R;
-import com.adamsite.projectadam.adapter.RecyclerViewAdapter;
-import com.adamsite.projectadam.interfaces.FragmentInterface;
+import com.adamsite.projectadam.adapters.RecyclerViewAdapter;
+import com.adamsite.projectadam.interfaces.IFragment;
 import com.adamsite.projectadam.model.VKAudio;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKError;
@@ -29,14 +29,14 @@ import com.vk.sdk.api.model.VkAudioArray;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyAudioFragment extends android.support.v4.app.Fragment implements FragmentInterface {
+public class MyAudioFragment extends android.support.v4.app.Fragment implements IFragment {
 
     private RecyclerView recyclerView;
     private RecyclerViewAdapter recyclerAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
 
-    private List<VKAudio> myAudioList = new ArrayList<>();
-    private List<VKAudio> searchAudioList = new ArrayList<>();
+    private List<VKAudio> myAudioList;
+    private List<VKAudio> searchAudioList;
 
     public interface onShowMyAudio {
         void showMyAudioFragment();
@@ -49,16 +49,55 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        recyclerAdapter.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onViewStateRestored(Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState != null) {
+            myAudioList = savedInstanceState.getParcelableArrayList("savedList");
+        }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+        setHasOptionsMenu(true);
+
+        myAudioList = new ArrayList<>();
+        searchAudioList = new ArrayList<>();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_my_audio, container, false);
+        return inflater.inflate(R.layout.fragment_my_audio, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         toolbarSetTitle();
         searchViewSetVisibility();
-        recyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
-        initSwipeRefreshLayout(rootView);
+        initRecyclerView(view);
+        initSwipeRefreshLayout(view);
 
-        return rootView;
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        recyclerView.addItemDecoration(new RecyclerViewAdapter.RecyclerViewItemDecoration(getActivity()));
+
+        if (savedInstanceState != null) {
+            myAudioList = savedInstanceState.getParcelableArrayList("savedList");
+            searchAudioList = savedInstanceState.getParcelableArrayList("savedList");
+        } else {
+            myAudioShow();
+        }
+        recyclerAdapter = new RecyclerViewAdapter(searchAudioList);
+        recyclerView.setAdapter(recyclerAdapter);
     }
 
     @Override
@@ -73,6 +112,10 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
         searchView.setVisibility(View.VISIBLE);
     }
 
+    private void initRecyclerView(View rootView) {
+        recyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
+    }
+
     private void initSwipeRefreshLayout(View rootView) {
         swipeRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -83,35 +126,9 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
         });
     }
 
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recyclerView.addItemDecoration(new RecyclerViewAdapter.RecyclerViewItemDecoration(getActivity()));
-
-        myAudioShow();
-        recyclerAdapter = new RecyclerViewAdapter(getActivity(), searchAudioList);
-        recyclerView.setAdapter(recyclerAdapter);
-    }
-
     public void myAudioShow() {
         VKRequest request = VKApi.audio().get();
         request.executeWithListener(audioShowRL);
-    }
-
-    public void myAudioSearch(String query) {
-        query = query.toLowerCase();
-        final List<VKAudio> filteredAudioList = new ArrayList<>();
-
-        for (VKAudio audio : myAudioList) {
-            if (audio.getAudioArtist().toLowerCase().contains(query) ||
-                    audio.getAudioTitle().toLowerCase().contains(query)) {
-                filteredAudioList.add(audio);
-            }
-        }
-        recyclerAdapter.animateTo(filteredAudioList);
-        recyclerView.scrollToPosition(0);
     }
 
     public void audioSearch(String query) {
@@ -123,6 +140,21 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
                 Const.COUNT, 50
         ));
         request.executeWithListener(audioShowRL);
+    }
+
+    public void myAudioSearch(String query) {
+        query = query.toLowerCase();
+        ArrayList<VKAudio> filteredAudioList = new ArrayList<>();
+
+        for (VKAudio audio : myAudioList) {
+            if (audio.getAudioArtist().toLowerCase().contains(query) ||
+                audio.getAudioTitle().toLowerCase().contains(query)) {
+                filteredAudioList.add(audio);
+            }
+        }
+
+        recyclerAdapter.animateTo(filteredAudioList);
+        recyclerView.scrollToPosition(0);
     }
 
     VKRequest.VKRequestListener audioShowRL = new VKRequest.VKRequestListener() {
@@ -140,8 +172,8 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
 
             VkAudioArray audioArray = (VkAudioArray) response.parsedModel;
             for (VKApiAudio audio : audioArray) {
-                myAudioList.add(new VKAudio(audio.artist, audio.title, audio.getId(), audio.url));
-                searchAudioList.add(new VKAudio(audio.artist, audio.title, audio.getId(), audio.url));
+                myAudioList.add(new VKAudio(audio.artist, audio.title, audio.getId(), audio.url, audio.duration));
+                searchAudioList.add(new VKAudio(audio.artist, audio.title, audio.getId(), audio.url, audio.duration));
                 recyclerAdapter.notifyItemInserted(audioArray.indexOf(audio));
             }
             swipeRefreshLayout.setRefreshing(false);
