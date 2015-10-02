@@ -7,7 +7,8 @@
     <string name="sign_in">Авторизация через VK</string>
     <string name="action_login">Вход в VK</string>
     <string name="action_logout">Выход из VK</string>
-    <string name="action_my_audio">Мои аудиозаписи</string>
+    <string name="action_my_audio">Мои Аудиозаписи</string>
     <string name="iv_play_pause_content_description">Индикатор паузы</string>
     <string name="error">Ошибка</string>
+    <string name="action_search">Поиск</string>
 </resources>

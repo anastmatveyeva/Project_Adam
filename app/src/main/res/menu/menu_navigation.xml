@@ -2,29 +2,31 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <item
-        android:id="@+id/action_my_audio"
-        android:orderInCategory="100"
-        android:title="@string/action_my_audio"
-        android:icon="@drawable/ic_audiotrack_black_24dp"/>
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/action_my_audio"
+            android:orderInCategory="100"
+            android:title="@string/action_my_audio"
+            android:icon="@drawable/ic_audiotrack_black_24dp"/>
 
-    <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="200"
-        android:title="@string/action_settings"
-        android:icon="@drawable/ic_settings_black_24dp"/>
+        <item
+            android:id="@+id/action_settings"
+            android:orderInCategory="200"
+            android:title="@string/action_settings"
+            android:icon="@drawable/ic_settings_black_24dp"/>
 
-    <item
-        android:id="@+id/action_vk_login"
-        android:orderInCategory="300"
-        android:title="@string/action_login"
-        android:icon="@drawable/ic_login"
-        android:visible="true"/>
+        <item
+            android:id="@+id/action_vk_login"
+            android:orderInCategory="300"
+            android:title="@string/action_login"
+            android:icon="@drawable/ic_login"
+            android:visible="true"/>
 
-    <item
-        android:id="@+id/action_vk_logout"
-        android:orderInCategory="300"
-        android:title="@string/action_logout"
-        android:icon="@drawable/ic_logout"
-        android:visible="false"/>
+        <item
+            android:id="@+id/action_vk_logout"
+            android:orderInCategory="300"
+            android:title="@string/action_logout"
+            android:icon="@drawable/ic_logout"
+            android:visible="false"/>
+    </group>
 </menu>

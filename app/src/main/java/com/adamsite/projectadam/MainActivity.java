@@ -12,28 +12,37 @@ import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 
+import com.adamsite.projectadam.fragments.LoginFragment;
+import com.adamsite.projectadam.fragments.LogoutFragment;
+import com.adamsite.projectadam.fragments.MyAudioFragment;
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKCallback;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKError;
 
-import com.adamsite.projectadam.fragments.LoginFragment;
-import com.adamsite.projectadam.fragments.LogoutFragment;
-import com.adamsite.projectadam.fragments.MyAudioFragment;
-
 public class MainActivity extends AppCompatActivity implements MyAudioFragment.onShowMyAudio, LoginFragment.onShowLogin, LogoutFragment.onShowLogout {
 
+    private Toolbar toolbar;
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private SearchView searchView;
 
+    private MyAudioFragment myAudioFragment;
+    private LoginFragment loginFragment;
+    private LogoutFragment logoutFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (savedInstanceState != null) {
+            myAudioFragment = (MyAudioFragment) getSupportFragmentManager().findFragmentByTag(Const.MY_AUDIO_FRAGMENT);
+            loginFragment = (LoginFragment) getSupportFragmentManager().findFragmentByTag(Const.LOGIN_FRAGMENT);
+            logoutFragment = (LogoutFragment) getSupportFragmentManager().findFragmentByTag(Const.LOGOUT_FRAGMENT);
+        }
 
         initToolbar();
         initNavigationView();
@@ -43,12 +52,8 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
     }
 
     private void initToolbar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setHomeButtonEnabled(true);
-        }
     }
 
     private void initSearchView() {
@@ -70,39 +75,35 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
 
     private void initNavigationView() {
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.drawer_open, R.string.drawer_close) {
-
-            public void onDrawerClosed(View view) {
-                supportInvalidateOptionsMenu();
-            }
-
-            public void onDrawerOpened(View drawerView) {
-                supportInvalidateOptionsMenu();
-            }
-        };
-        drawerToggle.setDrawerIndicatorEnabled(true);
+        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.drawer_open, R.string.drawer_close);
         drawerLayout.setDrawerListener(drawerToggle);
 
         navigationView = (NavigationView) findViewById(R.id.navigation_view);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(MenuItem menuItem) {
-                menuItem.setChecked(true);
-                switch (menuItem.getItemId()) {
-                    case R.id.action_my_audio:
-                        showMyAudioFragment();
-                        break;
-                    case R.id.action_vk_login:
-                        showLoginFragment();
-                        break;
-                    case R.id.action_vk_logout:
-                        showLogoutFragment();
-                        break;
-                }
-                drawerLayout.closeDrawer(GravityCompat.START);
+                selectDrawerItem(menuItem);
                 return true;
             }
         });
+    }
+
+    private void selectDrawerItem(MenuItem menuItem) {
+        switch (menuItem.getItemId()) {
+            case R.id.action_my_audio:
+                showMyAudioFragment();
+                break;
+            case R.id.action_settings:
+                break;
+            case R.id.action_vk_login:
+                showLoginFragment();
+                break;
+            case R.id.action_vk_logout:
+                showLogoutFragment();
+                break;
+        }
+        menuItem.setChecked(true);
+        drawerLayout.closeDrawer(GravityCompat.START);
     }
 
     private void wakeUpSession() {
@@ -143,12 +144,22 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
     }
 
     @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         VKCallback<VKAccessToken> callback = new VKCallback<VKAccessToken>() {
             @Override
             public void onResult(VKAccessToken res) {
                 // User passed Authorization
-                showMyAudioFragment();
+                //showMyAudioFragment();
             }
 
             @Override
@@ -178,26 +189,43 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
 
     @Override
     public void showMyAudioFragment() {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.container, new MyAudioFragment(), Const.MY_AUDIO_FRAGMENT)
-                .commit();
+        if (myAudioFragment == null) {
+            myAudioFragment = new MyAudioFragment();
+        }
+        if (!myAudioFragment.isInLayout()) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.container, myAudioFragment, Const.MY_AUDIO_FRAGMENT)
+                    .commit();
+        }
     }
 
     @Override
     public void showLoginFragment() {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.container, new LoginFragment(), Const.LOGIN_FRAGMENT)
-                .commit();
+        if (loginFragment == null) {
+            loginFragment = new LoginFragment();
+        }
+
+        if (!loginFragment.isInLayout()) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.container, loginFragment, Const.LOGIN_FRAGMENT)
+                    .commit();
+        }
     }
 
     @Override
     public void showLogoutFragment() {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.container, new LogoutFragment(), Const.LOGOUT_FRAGMENT)
-                .commit();
+        if (logoutFragment == null) {
+            logoutFragment = new LogoutFragment();
+        }
+
+        if (!logoutFragment.isInLayout()) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.container, logoutFragment, Const.LOGOUT_FRAGMENT)
+                    .commit();
+        }
     }
 
     @Override
@@ -218,5 +246,15 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
             return true;
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
     }
 }

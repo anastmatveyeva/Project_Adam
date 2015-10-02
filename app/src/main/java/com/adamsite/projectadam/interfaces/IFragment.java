@@ -1,6 +1,6 @@
 package com.adamsite.projectadam.interfaces;
 
-public interface FragmentInterface {
+public interface IFragment {
     void toolbarSetTitle();
     void searchViewSetVisibility();
 }
