@@ -3,7 +3,6 @@ package com.adamsite.projectadam.fragments;
 
 import android.os.Bundle;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,16 +34,9 @@ public class LoginFragment extends android.support.v4.app.Fragment implements IF
             }
         });
 
-        toolbarSetTitle();
         searchViewSetVisibility();
 
         return rootView;
-    }
-
-    @Override
-    public void toolbarSetTitle() {
-        Toolbar toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.action_login);
     }
 
     @Override

@@ -3,7 +3,6 @@ package com.adamsite.projectadam.fragments;
 
 import android.os.Bundle;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,7 @@ public class LogoutFragment extends android.support.v4.app.Fragment implements I
     public interface onShowLogout {
         void showLogoutFragment();
     }
+
     public LogoutFragment() {
         super();
     }
@@ -36,16 +36,9 @@ public class LogoutFragment extends android.support.v4.app.Fragment implements I
             }
         });
 
-        toolbarSetTitle();
         searchViewSetVisibility();
 
         return rootView;
-    }
-
-    @Override
-    public void toolbarSetTitle() {
-        Toolbar toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.action_logout);
     }
 
     @Override

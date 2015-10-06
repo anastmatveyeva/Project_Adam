@@ -6,7 +6,6 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -82,7 +81,6 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        toolbarSetTitle();
         searchViewSetVisibility();
         initRecyclerView(view);
         initSwipeRefreshLayout(view);
@@ -99,12 +97,6 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
         }
         recyclerAdapter = new RecyclerViewAdapter(searchAudioList);
         recyclerView.setAdapter(recyclerAdapter);
-    }
-
-    @Override
-    public void toolbarSetTitle() {
-        Toolbar toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.action_my_audio);
     }
 
     @Override

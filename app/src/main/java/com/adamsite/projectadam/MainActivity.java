@@ -143,6 +143,10 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
         }
     }
 
+    public void toolbarSetTitle(String title) {
+        toolbar.setTitle(title);
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -189,6 +193,8 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
 
     @Override
     public void showMyAudioFragment() {
+        toolbarSetTitle(getResources().getString(R.string.action_my_audio));
+
         if (myAudioFragment == null) {
             myAudioFragment = new MyAudioFragment();
         }
@@ -202,6 +208,8 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
 
     @Override
     public void showLoginFragment() {
+        toolbarSetTitle(getResources().getString(R.string.action_login));
+
         if (loginFragment == null) {
             loginFragment = new LoginFragment();
         }
@@ -216,6 +224,8 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
 
     @Override
     public void showLogoutFragment() {
+        toolbarSetTitle(getResources().getString(R.string.action_logout));
+
         if (logoutFragment == null) {
             logoutFragment = new LogoutFragment();
         }
