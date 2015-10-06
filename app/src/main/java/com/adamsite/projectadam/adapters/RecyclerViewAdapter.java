@@ -166,7 +166,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return audioList.size();
     }
 
-    public void animateTo(ArrayList<VKAudio> audioList) {
+    public void animateTo(List<VKAudio> audioList) {
         applyAndAnimateRemovals(audioList);
         applyAndAnimateAdditions(audioList);
         applyAndAnimateMovedItems(audioList);
@@ -181,7 +181,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         }
     }
 
-    private void applyAndAnimateAdditions(ArrayList<VKAudio> newAudios) {
+    private void applyAndAnimateAdditions(List<VKAudio> newAudios) {
         for (int i = 0, count = newAudios.size(); i < count; i++) {
             final VKAudio audio = newAudios.get(i);
             if (!audioList.contains(audio)) {
@@ -190,7 +190,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         }
     }
 
-    private void applyAndAnimateMovedItems(ArrayList<VKAudio> newAudios) {
+    private void applyAndAnimateMovedItems(List<VKAudio> newAudios) {
         for (int toPosition = newAudios.size() - 1; toPosition >= 0; toPosition--) {
             final VKAudio audio = newAudios.get(toPosition);
             final int fromPosition = audioList.indexOf(audio);
