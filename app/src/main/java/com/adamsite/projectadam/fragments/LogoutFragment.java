@@ -2,17 +2,15 @@ package com.adamsite.projectadam.fragments;
 
 
 import android.os.Bundle;
-import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.adamsite.projectadam.MainActivity;
 import com.adamsite.projectadam.R;
-import com.adamsite.projectadam.interfaces.IFragment;
 import com.vk.sdk.VKSdk;
 
-public class LogoutFragment extends android.support.v4.app.Fragment implements IFragment {
+public class LogoutFragment extends android.support.v4.app.Fragment {
 
     public interface onShowLogout {
         void showLogoutFragment();
@@ -35,16 +33,6 @@ public class LogoutFragment extends android.support.v4.app.Fragment implements I
                 }
             }
         });
-
-        searchViewSetVisibility();
-
         return rootView;
-    }
-
-    @Override
-    public void searchViewSetVisibility() {
-        SearchView searchView = (SearchView) getActivity().findViewById(R.id.search_view);
-        searchView.onActionViewCollapsed();
-        searchView.setVisibility(View.GONE);
     }
 }

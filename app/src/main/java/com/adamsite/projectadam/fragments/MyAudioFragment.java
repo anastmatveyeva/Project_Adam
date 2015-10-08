@@ -2,12 +2,16 @@ package com.adamsite.projectadam.fragments;
 
 
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -15,7 +19,6 @@ import android.widget.Toast;
 import com.adamsite.projectadam.Const;
 import com.adamsite.projectadam.R;
 import com.adamsite.projectadam.adapters.RecyclerViewAdapter;
-import com.adamsite.projectadam.interfaces.IFragment;
 import com.adamsite.projectadam.model.VKAudio;
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKError;
@@ -28,19 +31,16 @@ import com.vk.sdk.api.model.VkAudioArray;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyAudioFragment extends android.support.v4.app.Fragment implements IFragment {
+public class MyAudioFragment extends android.support.v4.app.Fragment {
 
     private RecyclerView recyclerView;
     private RecyclerViewAdapter recyclerAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
 
     private List<VKAudio> myAudioList;
-    private List<VKAudio> searchAudioList;
 
     public interface onShowMyAudio {
         void showMyAudioFragment();
-        void myAudioSearch(String query);
-        void audioSearch(String query);
     }
 
     public MyAudioFragment() {
@@ -54,21 +54,10 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
     }
 
     @Override
-    public void onViewStateRestored(Bundle savedInstanceState) {
-        super.onViewStateRestored(savedInstanceState);
-        if (savedInstanceState != null) {
-            myAudioList = savedInstanceState.getParcelableArrayList("savedList");
-        }
-    }
-
-    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         setHasOptionsMenu(true);
-
-        myAudioList = new ArrayList<>();
-        searchAudioList = new ArrayList<>();
     }
 
     @Override
@@ -81,36 +70,29 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        searchViewSetVisibility();
         initRecyclerView(view);
         initSwipeRefreshLayout(view);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.addItemDecoration(new RecyclerViewAdapter.RecyclerViewItemDecoration(getActivity()));
 
+        myAudioList = new ArrayList<>();
         if (savedInstanceState != null) {
-            recyclerAdapter.onRestoreInstanceState(savedInstanceState);
             myAudioList = savedInstanceState.getParcelableArrayList("savedList");
-            searchAudioList = savedInstanceState.getParcelableArrayList("savedList");
         } else {
             myAudioShow();
         }
-        recyclerAdapter = new RecyclerViewAdapter(searchAudioList);
+        recyclerAdapter = new RecyclerViewAdapter(myAudioList);
         recyclerView.setAdapter(recyclerAdapter);
     }
 
-    @Override
-    public void searchViewSetVisibility() {
-        SearchView searchView = (SearchView) getActivity().findViewById(R.id.search_view);
-        searchView.setVisibility(View.VISIBLE);
-    }
-
     private void initRecyclerView(View rootView) {
-        recyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
+        recyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview);
     }
 
     private void initSwipeRefreshLayout(View rootView) {
         swipeRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_refresh_layout);
+        swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary, R.color.colorPrimaryDark);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -121,7 +103,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
 
     public void myAudioShow() {
         VKRequest request = VKApi.audio().get();
-        request.executeWithListener(audioShowRL);
+        request.executeWithListener(rlAudioShow);
     }
 
     public void audioSearch(String query) {
@@ -132,33 +114,39 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
                 Const.OFFSET, 0,
                 Const.COUNT, 50
         ));
-        request.executeWithListener(audioShowRL);
+        request.executeWithListener(rlAudioShow);
     }
 
     public void myAudioSearch(String query) {
-        query = query.toLowerCase();
-        ArrayList<VKAudio> filteredAudioList = new ArrayList<>();
+        final List<VKAudio> filteredAudioList = filterAudio(myAudioList, query);
+        recyclerAdapter.animateTo(filteredAudioList);
+        recyclerView.scrollToPosition(0);
+        for (VKAudio audio: myAudioList) {
+            Log.d("VKAUDIO_FILTEREDLIST", audio.getAudioArtist() + " - " + audio.getAudioTitle());
+        }
+        Log.d("VKAUDIO_FILTEREDLIST", "END OF SEARCH");
+    }
 
-        for (VKAudio audio : myAudioList) {
+    private List<VKAudio> filterAudio(List<VKAudio> audioList, String query) {
+        query = query.toLowerCase();
+
+        final List<VKAudio> filteredAudioList = new ArrayList<>();
+        for (VKAudio audio : audioList) {
             if (audio.getAudioArtist().toLowerCase().contains(query) ||
-                audio.getAudioTitle().toLowerCase().contains(query)) {
+                    audio.getAudioTitle().toLowerCase().contains(query)) {
                 filteredAudioList.add(audio);
             }
         }
-
-        recyclerAdapter.animateTo(filteredAudioList);
-        recyclerView.scrollToPosition(0);
+        return filteredAudioList;
     }
 
-    VKRequest.VKRequestListener audioShowRL = new VKRequest.VKRequestListener() {
+    VKRequest.VKRequestListener rlAudioShow = new VKRequest.VKRequestListener() {
         @Override
         public void onComplete(VKResponse response) {
-            myAudioList.clear();
-            int size = searchAudioList.size();
-
+            int size = myAudioList.size();
             if (size > 0) {
                 for (int i=0; i<size; i++) {
-                    searchAudioList.remove(0);
+                    myAudioList.remove(0);
                     recyclerAdapter.notifyItemRemoved(0);
                 }
             }
@@ -166,7 +154,6 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
             VkAudioArray audioArray = (VkAudioArray) response.parsedModel;
             for (VKApiAudio audio : audioArray) {
                 myAudioList.add(new VKAudio(audio.artist, audio.title, audio.getId(), audio.url, audio.duration));
-                searchAudioList.add(new VKAudio(audio.artist, audio.title, audio.getId(), audio.url, audio.duration));
                 recyclerAdapter.notifyItemInserted(audioArray.indexOf(audio));
             }
             swipeRefreshLayout.setRefreshing(false);
@@ -184,4 +171,25 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
             swipeRefreshLayout.setRefreshing(false);
         }
     };
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_myaudio, menu);
+
+        final MenuItem item = menu.findItem(R.id.action_search);
+        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(item);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                audioSearch(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                myAudioSearch(newText);
+                return true;
+            }
+        });
+    }
 }

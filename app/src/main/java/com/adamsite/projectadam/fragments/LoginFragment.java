@@ -2,7 +2,6 @@ package com.adamsite.projectadam.fragments;
 
 
 import android.os.Bundle;
-import android.support.v7.widget.SearchView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,10 +9,9 @@ import android.view.ViewGroup;
 import com.adamsite.projectadam.Const;
 import com.adamsite.projectadam.MainActivity;
 import com.adamsite.projectadam.R;
-import com.adamsite.projectadam.interfaces.IFragment;
 import com.vk.sdk.VKSdk;
 
-public class LoginFragment extends android.support.v4.app.Fragment implements IFragment {
+public class LoginFragment extends android.support.v4.app.Fragment {
 
     public interface onShowLogin {
         void showLoginFragment();
@@ -33,16 +31,6 @@ public class LoginFragment extends android.support.v4.app.Fragment implements IF
                 ((MainActivity) getActivity()).navViewItemVisibility(true);
             }
         });
-
-        searchViewSetVisibility();
-
         return rootView;
-    }
-
-    @Override
-    public void searchViewSetVisibility() {
-        SearchView searchView = (SearchView) getActivity().findViewById(R.id.search_view);
-        searchView.onActionViewCollapsed();
-        searchView.setVisibility(View.GONE);
     }
 }

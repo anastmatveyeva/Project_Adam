@@ -8,7 +8,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
@@ -27,7 +26,6 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
-    private SearchView searchView;
 
     private MyAudioFragment myAudioFragment;
     private LoginFragment loginFragment;
@@ -46,7 +44,6 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
 
         initToolbar();
         initNavigationView();
-        initSearchView();
 
         wakeUpSession();
     }
@@ -54,23 +51,6 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
     private void initToolbar() {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-    }
-
-    private void initSearchView() {
-        searchView = (SearchView) findViewById(R.id.search_view);
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                audioSearch(searchView.getQuery().toString());
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                myAudioSearch(searchView.getQuery().toString());
-                return true;
-            }
-        });
     }
 
     private void initNavigationView() {
@@ -178,20 +158,6 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
     }
 
     @Override
-    public void myAudioSearch(String query) {
-        MyAudioFragment myAudioFragment = (MyAudioFragment) getSupportFragmentManager().findFragmentByTag(Const.MY_AUDIO_FRAGMENT);
-        if (myAudioFragment != null)
-            myAudioFragment.myAudioSearch(query);
-    }
-
-    @Override
-    public void audioSearch(String query) {
-        MyAudioFragment myAudioFragment = (MyAudioFragment) getSupportFragmentManager().findFragmentByTag(Const.MY_AUDIO_FRAGMENT);
-        if (myAudioFragment != null)
-            myAudioFragment.audioSearch(query);
-    }
-
-    @Override
     public void showMyAudioFragment() {
         toolbarSetTitle(getResources().getString(R.string.action_my_audio));
 
@@ -256,15 +222,5 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
             return true;
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
     }
 }

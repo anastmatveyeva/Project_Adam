@@ -11,4 +11,5 @@
     <string name="iv_play_pause_content_description">Индикатор паузы</string>
     <string name="error">Ошибка</string>
     <string name="action_search">Поиск</string>
+    <string name="recyclerview_empty">Список аудиозаписей пуст</string>
 </resources>

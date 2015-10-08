@@ -61,8 +61,8 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         holder.rlRecyclerRoot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                RelativeLayout rl = (RelativeLayout) v;
-                VKAudio localAudio = (VKAudio) rl.getTag();
+                RelativeLayout relativeLayout = (RelativeLayout) v;
+                VKAudio localAudio = (VKAudio) relativeLayout.getTag();
                 playAudio(localAudio, newAudio, position, holder);
             }
         });
@@ -70,11 +70,11 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     private void playAudio(VKAudio localAudio, VKAudio newAudio, int newPos, AudioViewHolder holder) {
         if (newAudio.getAudioStatus() == VKAudio.Status.OFF) {
-            for (VKAudio a : audioList) {
-                a.setAudioStatus(VKAudio.Status.OFF);
+            for (VKAudio audio : audioList) {
+                audio.setAudioStatus(VKAudio.Status.OFF);
             }
-            for (AudioViewHolder h : AudioViewHolder.getHolderList()) {
-                h.ivPlayPause.setVisibility(View.GONE);
+            for (AudioViewHolder viewHolder : AudioViewHolder.getHolderList()) {
+                viewHolder.ivPlayPause.setVisibility(View.GONE);
             }
 
             newAudio.setAudioStatus(VKAudio.Status.PLAYING);
@@ -154,7 +154,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     public void onSaveInstanceState(Bundle outState) {
-        outState.putParcelableArrayList("savedList", (ArrayList<VKAudio>)audioList);
+        outState.putParcelableArrayList("savedList", (ArrayList<VKAudio>) audioList);
     }
 
     public void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -166,34 +166,34 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return audioList.size();
     }
 
-    public void animateTo(List<VKAudio> audioList) {
-        applyAndAnimateRemovals(audioList);
-        applyAndAnimateAdditions(audioList);
-        applyAndAnimateMovedItems(audioList);
+    public void animateTo(List<VKAudio> models) {
+        applyAndAnimateRemovals(models);
+        applyAndAnimateAdditions(models);
+        applyAndAnimateMovedItems(models);
     }
 
-    private void applyAndAnimateRemovals(List<VKAudio> newAudios) {
+    private void applyAndAnimateRemovals(List<VKAudio> newModels) {
         for (int i = audioList.size() - 1; i >= 0; i--) {
-            final VKAudio audio = audioList.get(i);
-            if (!newAudios.contains(audio)) {
+            final VKAudio model = audioList.get(i);
+            if (!newModels.contains(model)) {
                 removeItem(i);
             }
         }
     }
 
-    private void applyAndAnimateAdditions(List<VKAudio> newAudios) {
-        for (int i = 0, count = newAudios.size(); i < count; i++) {
-            final VKAudio audio = newAudios.get(i);
-            if (!audioList.contains(audio)) {
-                addItem(i, audio);
+    private void applyAndAnimateAdditions(List<VKAudio> newModels) {
+        for (int i = 0, count = newModels.size(); i < count; i++) {
+            final VKAudio model = newModels.get(i);
+            if (!audioList.contains(model)) {
+                addItem(i, model);
             }
         }
     }
 
-    private void applyAndAnimateMovedItems(List<VKAudio> newAudios) {
-        for (int toPosition = newAudios.size() - 1; toPosition >= 0; toPosition--) {
-            final VKAudio audio = newAudios.get(toPosition);
-            final int fromPosition = audioList.indexOf(audio);
+    private void applyAndAnimateMovedItems(List<VKAudio> newModels) {
+        for (int toPosition = newModels.size() - 1; toPosition >= 0; toPosition--) {
+            final VKAudio model = newModels.get(toPosition);
+            final int fromPosition = audioList.indexOf(model);
             if (fromPosition >= 0 && fromPosition != toPosition) {
                 moveItem(fromPosition, toPosition);
             }
@@ -201,19 +201,19 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     public VKAudio removeItem(int position) {
-        final VKAudio audio = audioList.remove(position);
+        final VKAudio model = audioList.remove(position);
         notifyItemRemoved(position);
-        return audio;
+        return model;
     }
 
-    public void addItem(int position, VKAudio audio) {
-        audioList.add(position, audio);
+    public void addItem(int position, VKAudio model) {
+        audioList.add(position, model);
         notifyItemInserted(position);
     }
 
     public void moveItem(int fromPosition, int toPosition) {
-        final VKAudio audio = audioList.remove(fromPosition);
-        audioList.add(toPosition, audio);
+        final VKAudio model = audioList.remove(fromPosition);
+        audioList.add(toPosition, model);
         notifyItemMoved(fromPosition, toPosition);
     }
 

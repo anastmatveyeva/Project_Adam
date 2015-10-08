@@ -18,4 +18,7 @@
 
     <string name="iv_play_pause_content_description">Play/Pause indicator</string>
 
+    <string name="recyclerview_empty">Your audio list is empty</string>
+    <string name="action_search">Search</string>
+
 </resources>
