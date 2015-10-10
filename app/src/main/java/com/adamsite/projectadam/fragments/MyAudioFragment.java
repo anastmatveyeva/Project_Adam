@@ -38,6 +38,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
 
     private List<VKAudio> myAudioList;
+    private List<VKAudio> searchedAudioList;
 
     public interface onShowMyAudio {
         void showMyAudioFragment();
@@ -61,8 +62,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_my_audio, container, false);
     }
 
@@ -77,9 +77,12 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
         recyclerView.addItemDecoration(new RecyclerViewAdapter.RecyclerViewItemDecoration(getActivity()));
 
         myAudioList = new ArrayList<>();
+        searchedAudioList = new ArrayList<>();
         if (savedInstanceState != null) {
+            Toast.makeText(getContext(), "loaded from bundle", Toast.LENGTH_SHORT).show();
             myAudioList = savedInstanceState.getParcelableArrayList("savedList");
         } else {
+            Toast.makeText(getContext(), "loaded from response", Toast.LENGTH_SHORT).show();
             myAudioShow();
         }
         recyclerAdapter = new RecyclerViewAdapter(myAudioList);
@@ -103,7 +106,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
 
     public void myAudioShow() {
         VKRequest request = VKApi.audio().get();
-        request.executeWithListener(rlAudioShow);
+        request.executeWithListener(rlMyAudioShow);
     }
 
     public void audioSearch(String query) {
@@ -112,19 +115,20 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
                 Const.AUTO_COMPLETE, 1,
                 Const.SORT, 2,
                 Const.OFFSET, 0,
-                Const.COUNT, 50
+                Const.COUNT, 200
         ));
-        request.executeWithListener(rlAudioShow);
+        request.executeWithListener(rlSearchAudioShow);
     }
 
     public void myAudioSearch(String query) {
         final List<VKAudio> filteredAudioList = filterAudio(myAudioList, query);
         recyclerAdapter.animateTo(filteredAudioList);
+        recyclerAdapter.setAudioList(filteredAudioList);
         recyclerView.scrollToPosition(0);
-        for (VKAudio audio: myAudioList) {
-            Log.d("VKAUDIO_FILTEREDLIST", audio.getAudioArtist() + " - " + audio.getAudioTitle());
-        }
-        Log.d("VKAUDIO_FILTEREDLIST", "END OF SEARCH");
+
+        Log.d("VKAUDIO_FILTEREDLIST", "---------------------------------------------------------------------------------");
+        Log.d("VKAUDIO_FILTEREDLIST", "SEARCH FINISHED '" + query + "': " + myAudioList.size() + " ELEMENTS FOUND IN myAudioList");
+        Log.d("VKAUDIO_FILTEREDLIST", "SEARCH FINISHED '" + query + "': " + filteredAudioList.size() + " ELEMENTS FOUND IN filteredAudioList");
     }
 
     private List<VKAudio> filterAudio(List<VKAudio> audioList, String query) {
@@ -140,7 +144,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
         return filteredAudioList;
     }
 
-    VKRequest.VKRequestListener rlAudioShow = new VKRequest.VKRequestListener() {
+    VKRequest.VKRequestListener rlMyAudioShow = new VKRequest.VKRequestListener() {
         @Override
         public void onComplete(VKResponse response) {
             int size = myAudioList.size();
@@ -154,6 +158,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
             VkAudioArray audioArray = (VkAudioArray) response.parsedModel;
             for (VKApiAudio audio : audioArray) {
                 myAudioList.add(new VKAudio(audio.artist, audio.title, audio.getId(), audio.url, audio.duration));
+                recyclerAdapter.setAudioList(myAudioList);
                 recyclerAdapter.notifyItemInserted(audioArray.indexOf(audio));
             }
             swipeRefreshLayout.setRefreshing(false);
@@ -167,8 +172,39 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
         @Override
         public void onError(VKError error) {
             Toast.makeText(getActivity(), error.toString(), Toast.LENGTH_LONG).show();
-            Log.e(Const.LOG_TAG, error.toString());
+            Log.e(Const.LOG_TAG_APP, error.toString());
             swipeRefreshLayout.setRefreshing(false);
+        }
+    };
+
+    VKRequest.VKRequestListener rlSearchAudioShow = new VKRequest.VKRequestListener() {
+        @Override
+        public void onComplete(VKResponse response) {
+            int size = searchedAudioList.size();
+            if (size > 0) {
+                for (int i=0; i<size; i++) {
+                    searchedAudioList.remove(0);
+                    recyclerAdapter.notifyItemRemoved(0);
+                }
+            }
+
+            VkAudioArray audioArray = (VkAudioArray) response.parsedModel;
+            for (VKApiAudio audio : audioArray) {
+                searchedAudioList.add(new VKAudio(audio.artist, audio.title, audio.getId(), audio.url, audio.duration));
+                recyclerAdapter.setAudioList(searchedAudioList);
+                recyclerAdapter.notifyItemInserted(audioArray.indexOf(audio));
+            }
+            swipeRefreshLayout.setRefreshing(false);
+        }
+
+        @Override
+        public void onProgress(VKRequest.VKProgressType progressType, long bytesLoaded, long bytesTotal) {
+        }
+
+        @Override
+        public void onError(VKError error) {
+            Toast.makeText(getActivity(), error.toString(), Toast.LENGTH_LONG).show();
+            Log.e(Const.LOG_TAG_APP, error.toString());
         }
     };
 
@@ -182,7 +218,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 audioSearch(query);
-                return false;
+                return true;
             }
 
             @Override

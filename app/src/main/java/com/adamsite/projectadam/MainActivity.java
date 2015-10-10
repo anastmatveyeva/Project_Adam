@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
 
             @Override
             public void onError(VKError error) {
-                Log.e(Const.LOG_TAG, error.toString());
+                Log.e(Const.LOG_TAG_APP, error.toString());
             }
         });
     }
@@ -168,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.container, myAudioFragment, Const.MY_AUDIO_FRAGMENT)
-                    .commit();
+                    .commitAllowingStateLoss();
         }
     }
 
@@ -184,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.container, loginFragment, Const.LOGIN_FRAGMENT)
-                    .commit();
+                    .commitAllowingStateLoss();
         }
     }
 
@@ -200,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements MyAudioFragment.o
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.container, logoutFragment, Const.LOGOUT_FRAGMENT)
-                    .commit();
+                    .commitAllowingStateLoss();
         }
     }
 

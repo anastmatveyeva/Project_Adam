@@ -4,24 +4,21 @@ import com.vk.sdk.VKScope;
 
 public class Const {
 
-    //logTag
-    public static final String LOG_TAG = "PROJECT_ADAM";
+    //logTags
+    public static final String LOG_TAG_APP = "PROJECT_ADAM";
 
-    //scope
+    //vkScope
     public static final String[] SCOPE = new String[]
             {
                     VKScope.AUDIO
             };
 
-    //search
+    //vkQuerySearch
     public static final String Q = "q";
     public static final String AUTO_COMPLETE = "auto_complete";
     public static final String SORT = "sort";
     public static final String OFFSET = "offset";
     public static final String COUNT = "count";
-
-    //intentExtras
-    public static final String FROM_ANOTHER_ACTIVITY = "from_another_activity";
 
     //fragmentTags
     public static final String MY_AUDIO_FRAGMENT = "my_audio_fragment";
