@@ -3,4 +3,5 @@
     <color name="colorPrimary">#527dad</color>
     <color name="colorPrimaryDark">#38618d</color>
     <color name="colorAccent">#527dad</color>
+    <color name="colorNotificationBackground">#ffffff</color>
 </resources>
