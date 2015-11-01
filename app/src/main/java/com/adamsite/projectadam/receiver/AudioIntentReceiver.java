@@ -42,7 +42,6 @@ public class AudioIntentReceiver extends BroadcastReceiver {
                         context.startService(new Intent(context, AudioService.class).setAction(AudioService.ACTION_NEXT));
                         break;
                     case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-                        // TODO: ensure that doing this in rapid succession actually plays the previous song
                         context.startService(new Intent(context, AudioService.class).setAction(AudioService.ACTION_PREVIOUS));
                         break;
                 }
