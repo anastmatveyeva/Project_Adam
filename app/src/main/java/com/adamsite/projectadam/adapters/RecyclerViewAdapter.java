@@ -39,11 +39,12 @@ public class RecyclerViewAdapter extends FilterBindableAdapter<VKAudio, Recycler
     }
 
     public void onSaveInstanceState(Bundle outState) {
-        List<VKAudio> myAudioList = new ArrayList<>();
+        List<VKAudio> myFilteredAudioList = new ArrayList<>();
         for(int i=0; i<getRealItemCount(); i++) {
-            myAudioList.add(getItem(i));
+            myFilteredAudioList.add(getItem(i));
         }
-        //List<VKAudio> myAudioList = getItems();
-        outState.putParcelableArrayList("savedList", (ArrayList<VKAudio>) myAudioList);
+        List<VKAudio> myAudioList = getItems();
+        outState.putParcelableArrayList("myFilteredAudioList", (ArrayList<VKAudio>) myFilteredAudioList);
+        outState.putParcelableArrayList("myAudioList", (ArrayList<VKAudio>) myAudioList);
     }
 }

@@ -9,7 +9,7 @@ import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.media.session.MediaSessionManager;
+import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.NonNull;
@@ -19,8 +19,13 @@ import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.adamsite.projectadam.MainActivity;
 import com.adamsite.projectadam.R;
+import com.adamsite.projectadam.model.VKAudio;
 import com.adamsite.projectadam.receiver.AudioIntentReceiver;
+
+import java.io.IOException;
+import java.util.List;
 
 public class AudioService extends Service {
 
@@ -36,10 +41,12 @@ public class AudioService extends Service {
     public static final int NOTIFICATION_ID = 1;
 
     private MediaPlayer mMediaPlayer;
-    private MediaSessionManager mManager;
     private MediaSessionCompat mMediaSession;
     private MediaControllerCompat mMediaController;
     private AudioIntentReceiver audioIntentReceiver;
+
+    private List<VKAudio> trackList;
+    private int position;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -60,10 +67,17 @@ public class AudioService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (mManager == null) {
+        if (intent.getAction().equalsIgnoreCase(ACTION_PLAY) && intent.getParcelableArrayListExtra("tracklist") != null) {
+            trackList = intent.getParcelableArrayListExtra("tracklist");
+            position = intent.getIntExtra("position", 0);
+        }
+
+        if (mMediaSession == null) {
             initMediaSessions();
         }
+
         handleIntent(intent);
+
         Log.d("MediaPlayerService", "onStartCommand");
         return super.onStartCommand(intent, flags, startId);
     }
@@ -73,6 +87,7 @@ public class AudioService extends Service {
         super.onDestroy();
         Log.d("MediaPlayerService", "onDestroy");
         getApplicationContext().unregisterReceiver(audioIntentReceiver);
+        stopForeground(true);
     }
 
     private void handleIntent(Intent intent) {
@@ -111,6 +126,9 @@ public class AudioService extends Service {
     }
 
     private void buildNotification(NotificationCompat.Action action, String actionString) {
+        Intent myAudioFragmentIntent = new Intent(getApplicationContext(), MainActivity.class);
+        PendingIntent myAudioFragmentPendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, myAudioFragmentIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
         Intent stopServiceIntent = new Intent(getApplicationContext(), AudioService.class);
         stopServiceIntent.setAction(ACTION_STOP);
         PendingIntent stopServicePendingIntent = PendingIntent.getService(getApplicationContext(), 1, stopServiceIntent, 0);
@@ -119,14 +137,12 @@ public class AudioService extends Service {
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
-                .setOngoing(true)
                 .setShowWhen(false)
                 .setSmallIcon(R.drawable.ic_play_arrow_white_24dp)
-//                .setColor(ContextCompat.getColor(getApplicationContext(), R.color.vk_white))
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_notification_album_default))
-                .setContentTitle("Title")
-                .setContentText("Artist")
-//                .setContentIntent()
+                .setContentTitle(trackList.get(position).getAudioTitle())
+                .setContentText(trackList.get(position).getAudioArtist())
+                .setContentIntent(myAudioFragmentPendingIntent)
                 .setDeleteIntent(stopServicePendingIntent)
                 .addAction(generateAction(R.drawable.ic_skip_previous_white_24dp, "Previous", ACTION_PREVIOUS))
                 .addAction(action)
@@ -140,7 +156,11 @@ public class AudioService extends Service {
 
         switch (actionString) {
             case ACTION_PAUSE:
-                builder.setOngoing(false);
+                builder.setSmallIcon(R.drawable.ic_pause_white_24dp);
+                stopForeground(false);
+                break;
+            default:
+                startForeground(NOTIFICATION_ID, builder.build());
                 break;
         }
 
@@ -149,9 +169,31 @@ public class AudioService extends Service {
     }
 
     private void initMediaSessions() {
+        Toast.makeText(getApplicationContext(), "init mediasession", Toast.LENGTH_SHORT).show();
+        Log.d("MediaPlayerService", "init mediasession");
         mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+        mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                if (mMediaPlayer != null && !(!mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() > 1)) {
+                    mMediaPlayer.start();
+                }
+            }
+        });
+
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                Toast.makeText(getApplicationContext(), "track end", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         mMediaSession = new MediaSessionCompat(getApplicationContext(), "simple player session");
+        mMediaSession.setPlaybackToLocal(AudioManager.STREAM_MUSIC);
+        mMediaSession.setActive(true);
+
         try {
             mMediaController = new MediaControllerCompat(getApplicationContext(), mMediaSession.getSessionToken());
         } catch (RemoteException e) {
@@ -159,9 +201,29 @@ public class AudioService extends Service {
         }
 
         mMediaSession.setCallback(new MediaSessionCompat.Callback() {
+                                      private String actionString = "stopped";
+
                                       @Override
                                       public void onPlay() {
                                           super.onPlay();
+
+                                          if (!mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() > 1 && actionString.equalsIgnoreCase("paused")) {
+                                              mMediaPlayer.start();
+                                              actionString = "playing";
+                                          } else {
+                                              try {
+                                                  mMediaPlayer.reset();
+                                                  mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(trackList.get(position).getAudioURL()));
+                                                  mMediaPlayer.prepareAsync();
+                                                  actionString = "playing";
+                                              } catch (IOException e) {
+                                                  e.printStackTrace();
+                                                  Toast.makeText(getApplicationContext(), "IOException", Toast.LENGTH_SHORT).show();
+                                              } catch (IllegalStateException e) {
+                                                  e.printStackTrace();
+                                                  Toast.makeText(getApplicationContext(), "IllegalStateException", Toast.LENGTH_SHORT).show();
+                                              }
+                                          }
                                           Log.d("MediaPlayerService", "onPlay");
                                           Toast.makeText(getApplicationContext(), "onPlay", Toast.LENGTH_SHORT).show();
                                           buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE), ACTION_PLAY);
@@ -170,6 +232,10 @@ public class AudioService extends Service {
                                       @Override
                                       public void onPause() {
                                           super.onPause();
+                                          if (mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() > 1) {
+                                              mMediaPlayer.pause();
+                                              actionString = "paused";
+                                          }
                                           Log.d("MediaPlayerService", "onPause");
                                           Toast.makeText(getApplicationContext(), "onPause", Toast.LENGTH_SHORT).show();
                                           buildNotification(generateAction(R.drawable.ic_play_arrow_white_24dp, "Play", ACTION_PLAY), ACTION_PAUSE);
@@ -180,7 +246,14 @@ public class AudioService extends Service {
                                           super.onSkipToNext();
                                           Log.d("MediaPlayerService", "onSkipToNext");
                                           Toast.makeText(getApplicationContext(), "onSkipToNext", Toast.LENGTH_SHORT).show();
-                                          //Change media here
+
+                                          if (position < trackList.size() - 1) {
+                                              position++;
+                                          } else {
+                                              position = 0;
+                                          }
+                                          actionString = "playing";
+                                          onPlay();
                                           buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE), ACTION_NEXT);
                                       }
 
@@ -189,7 +262,14 @@ public class AudioService extends Service {
                                           super.onSkipToPrevious();
                                           Log.d("MediaPlayerService", "onSkipToPrevious");
                                           Toast.makeText(getApplicationContext(), "onSkipToPrevious", Toast.LENGTH_SHORT).show();
-                                          //Change media here
+
+                                          if (position > 0) {
+                                              position--;
+                                          } else {
+                                              position = trackList.size() - 1;
+                                          }
+                                          actionString = "playing";
+                                          onPlay();
                                           buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE), ACTION_PREVIOUS);
                                       }
 
@@ -214,11 +294,14 @@ public class AudioService extends Service {
                                           super.onStop();
                                           Log.d("MediaPlayerService", "onStop");
                                           Toast.makeText(getApplicationContext(), "onStop", Toast.LENGTH_SHORT).show();
-                                          //Stop media player here
+
                                           try {
+                                              if (mMediaPlayer.isPlaying()) {
+                                                  mMediaPlayer.stop();
+                                              }
                                               mMediaPlayer.release();
                                               mMediaPlayer = null;
-                                              mManager = null;
+                                              actionString = "stopped";
                                           } catch (IllegalStateException e) {
                                               Log.e("MediaPlayerService", e.getMessage());
                                           }
@@ -231,10 +314,11 @@ public class AudioService extends Service {
                                       @Override
                                       public void onSeekTo(long pos) {
                                           super.onSeekTo(pos);
+                                          actionString = "playing";
                                       }
                                   }
         );
-        mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS | MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS);
     }
 
     @Override

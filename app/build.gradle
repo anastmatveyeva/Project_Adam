@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.adamsite.projectadam"
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -25,6 +25,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.0'
     compile 'com.android.support:design:23.1.0'
     compile 'com.android.support:recyclerview-v7:23.1.0'
-    compile 'com.github.princeparadoxes:recyclerbindableadapter:1.0'
-    compile 'com.vk:androidsdk:1.5.7'
+    compile 'com.github.princeparadoxes:recyclerbindableadapter:1.1'
+    compile 'com.google.android.exoplayer:exoplayer:r1.5.1'
+    compile 'com.vk:androidsdk:1.6.1'
 }

@@ -14,9 +14,6 @@
         android:theme="@style/AppTheme" >
 
         <activity
-            android:name="com.vk.sdk.VKOpenAuthActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
             android:name="com.vk.sdk.VKServiceActivity"
             android:label="ServiceActivity"
             android:theme="@style/VK.Transparent" />
