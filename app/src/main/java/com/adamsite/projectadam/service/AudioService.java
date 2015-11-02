@@ -50,6 +50,7 @@ public class AudioService extends Service {
 
     private List<VKAudio> trackList;
     private int position;
+    private String actionString = "stopped";
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -200,7 +201,7 @@ public class AudioService extends Service {
         mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-                if (mMediaPlayer != null && !(!mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() > 1)) {
+                if (actionString.equalsIgnoreCase("playing")) {
                     mMediaPlayer.start();
                 }
             }
@@ -209,9 +210,9 @@ public class AudioService extends Service {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 Toast.makeText(getApplicationContext(), "track end", Toast.LENGTH_SHORT).show();
+                mMediaController.getTransportControls().skipToNext();
             }
         });
-
 
         try {
             mMediaController = new MediaControllerCompat(getApplicationContext(), mMediaSession.getSessionToken());
@@ -220,12 +221,10 @@ public class AudioService extends Service {
         }
 
         mMediaSession.setCallback(new MediaSessionCompat.Callback() {
-                                      private String actionString = "stopped";
-
                                       @Override
                                       public void onPlay() {
                                           super.onPlay();
-                                          if (!mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() > 1 && actionString.equalsIgnoreCase("paused")) {
+                                          if (actionString.equalsIgnoreCase("paused")) {
                                               mMediaPlayer.start();
                                               actionString = "playing";
 
@@ -252,7 +251,7 @@ public class AudioService extends Service {
                                       @Override
                                       public void onPause() {
                                           super.onPause();
-                                          if (mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() > 1) {
+                                          if (actionString.equalsIgnoreCase("playing")) {
                                               mMediaPlayer.pause();
                                               actionString = "paused";
 
