@@ -210,7 +210,9 @@ public class AudioService extends Service {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 Toast.makeText(getApplicationContext(), "track end", Toast.LENGTH_SHORT).show();
-                mMediaController.getTransportControls().skipToNext();
+                if (actionString.equalsIgnoreCase("playing")) {
+                    mMediaController.getTransportControls().skipToNext();
+                }
             }
         });
 
