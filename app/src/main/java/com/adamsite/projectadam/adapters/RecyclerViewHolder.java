@@ -35,6 +35,16 @@ public class RecyclerViewHolder extends RecyclerView.ViewHolder {
 
         tvAudioTitle.setText(audio.getAudioTitle());
         tvAudioArtist.setText(audio.getAudioArtist());
+
+        if (audio.getAudioStatus().equals(VKAudio.Status.PLAYING)) {
+            ivPlayPause.setVisibility(View.VISIBLE);
+            ivPlayPause.setImageResource(R.drawable.ic_pause_black_24dp);
+        } else if (audio.getAudioStatus().equals(VKAudio.Status.PAUSED)) {
+            ivPlayPause.setVisibility(View.VISIBLE);
+            ivPlayPause.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+        } else {
+            ivPlayPause.setVisibility(View.GONE);
+        }
     }
 
     View.OnClickListener onCLick = new View.OnClickListener() {

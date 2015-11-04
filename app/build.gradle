@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    buildToolsVersion "23.0.2"
 
     defaultConfig {
         applicationId "com.adamsite.projectadam"
@@ -26,6 +26,6 @@ dependencies {
     compile 'com.android.support:design:23.1.0'
     compile 'com.android.support:recyclerview-v7:23.1.0'
     compile 'com.github.princeparadoxes:recyclerbindableadapter:1.1'
-    compile 'com.google.android.exoplayer:exoplayer:r1.5.1'
+    compile 'com.google.android.exoplayer:exoplayer:r1.5.2'
     compile 'com.vk:androidsdk:1.6.1'
 }

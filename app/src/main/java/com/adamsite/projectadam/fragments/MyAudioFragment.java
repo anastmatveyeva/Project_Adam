@@ -41,7 +41,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
     private RecyclerView recyclerView;
     private TextView tvEmptyView;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private RecyclerViewAdapter filterExampleAdapter;
+    private RecyclerViewAdapter recyclerViewAdapter;
 
     public interface onShowMyAudio {
 
@@ -54,7 +54,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        filterExampleAdapter.onSaveInstanceState(outState);
+        recyclerViewAdapter.onSaveInstanceState(outState);
     }
 
     @Override
@@ -81,15 +81,15 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setHasFixedSize(true);
 
-        filterExampleAdapter = new RecyclerViewAdapter();
-        filterExampleAdapter.setActionListener(this);
-        recyclerView.setAdapter(filterExampleAdapter);
+        recyclerViewAdapter = new RecyclerViewAdapter();
+        recyclerViewAdapter.setActionListener(this);
+        recyclerView.setAdapter(recyclerViewAdapter);
 
         if (savedInstanceState != null) {
             List<VKAudio> myAudioList = savedInstanceState.getParcelableArrayList("myFilteredAudioList");
-            filterExampleAdapter.clear();
-            filterExampleAdapter.addAll(myAudioList);
-            Toast.makeText(getContext(), "loaded from bundle " + filterExampleAdapter.getRealItemCount(), Toast.LENGTH_SHORT).show();
+            recyclerViewAdapter.clear();
+            recyclerViewAdapter.addAll(myAudioList);
+            Toast.makeText(getContext(), "loaded from bundle " + recyclerViewAdapter.getRealItemCount(), Toast.LENGTH_SHORT).show();
         } else {
             myAudioShow();
         }
@@ -128,12 +128,12 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
     }
 
     public void myAudioSearch(String query) {
-        filterExampleAdapter.getFilter().filter(query);
-        Toast.makeText(getContext(), String.valueOf(filterExampleAdapter.getRealItemCount()), Toast.LENGTH_SHORT).show();
+        recyclerViewAdapter.getFilter().filter(query);
+        Toast.makeText(getContext(), String.valueOf(recyclerViewAdapter.getRealItemCount()), Toast.LENGTH_SHORT).show();
     }
 
     public void checkIfEmpty() {
-        if (filterExampleAdapter.getRealItemCount() == 0) {
+        if (recyclerViewAdapter.getRealItemCount() == 0) {
             tvEmptyView.setVisibility(View.VISIBLE);
         } else {
             tvEmptyView.setVisibility(View.GONE);
@@ -150,11 +150,11 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
                 myAudioList.add(new VKAudio(audio.artist, audio.title, audio.getId(), audio.url, audio.duration));
             }
 
-            filterExampleAdapter.clear();
-            filterExampleAdapter.addAll(myAudioList);
+            recyclerViewAdapter.clear();
+            recyclerViewAdapter.addAll(myAudioList);
             swipeRefreshLayout.setRefreshing(false);
             checkIfEmpty();
-            Toast.makeText(getContext(), "loaded from response " + filterExampleAdapter.getRealItemCount(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "loaded from response " + recyclerViewAdapter.getRealItemCount(), Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -176,11 +176,26 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
         Intent intent = new Intent(getActivity().getApplicationContext(), AudioService.class);
         intent.setAction(AudioService.ACTION_PLAY);
 
+//        //TODO:move setAudioStatus() to service
+//        recyclerViewAdapter.getItem(position).setAudioStatus(VKAudio.Status.PLAYING);
+//
+//        ArrayList<VKAudio> currentDisplayedTracks = new ArrayList<>();
+//        for(int i=0; i< recyclerViewAdapter.getRealItemCount(); i++) {
+//            if (i != position) {
+//                recyclerViewAdapter.getItem(i).setAudioStatus(VKAudio.Status.OFF);
+//            }
+//            currentDisplayedTracks.add(recyclerViewAdapter.getItem(i));
+//        }
+//        recyclerViewAdapter.notifyDataSetChanged();
+
+
+
         ArrayList<VKAudio> currentDisplayedTracks = new ArrayList<>();
-        for(int i=0; i<filterExampleAdapter.getRealItemCount(); i++) {
-            currentDisplayedTracks.add(filterExampleAdapter.getItem(i));
+        for(int i=0; i< recyclerViewAdapter.getRealItemCount(); i++) {
+            currentDisplayedTracks.add(recyclerViewAdapter.getItem(i));
         }
-//        intent.putParcelableArrayListExtra("tracklist", (ArrayList<VKAudio>) filterExampleAdapter.getItems());
+
+//        intent.putParcelableArrayListExtra("tracklist", (ArrayList<VKAudio>) recyclerViewAdapter.getItems());
         intent.putParcelableArrayListExtra("tracklist", currentDisplayedTracks);
 
         intent.putExtra("position", position);

@@ -247,6 +247,12 @@ public class AudioService extends Service {
                                                   Toast.makeText(getApplicationContext(), "IllegalStateException", Toast.LENGTH_SHORT).show();
                                               }
                                           }
+
+                                          for (VKAudio audio: trackList) {
+                                              audio.setAudioStatus(VKAudio.Status.OFF);
+                                          }
+                                          trackList.get(position).setAudioStatus(VKAudio.Status.PLAYING);
+
                                           buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE), ACTION_PLAY);
                                       }
 
@@ -256,6 +262,11 @@ public class AudioService extends Service {
                                           if (actionString.equalsIgnoreCase("playing")) {
                                               mMediaPlayer.pause();
                                               actionString = "paused";
+
+                                              for (VKAudio audio: trackList) {
+                                                  audio.setAudioStatus(VKAudio.Status.OFF);
+                                              }
+                                              trackList.get(position).setAudioStatus(VKAudio.Status.PAUSED);
 
                                               Log.d("MediaPlayerService", "onPause");
                                               Toast.makeText(getApplicationContext(), "onPause", Toast.LENGTH_SHORT).show();
@@ -330,6 +341,10 @@ public class AudioService extends Service {
                                               mMediaPlayer.release();
                                               mMediaPlayer = null;
                                               actionString = "stopped";
+
+                                              for (VKAudio audio: trackList) {
+                                                  audio.setAudioStatus(VKAudio.Status.OFF);
+                                              }
 
                                               Log.d("MediaPlayerService", "onStop");
                                               Toast.makeText(getApplicationContext(), "onStop", Toast.LENGTH_SHORT).show();
