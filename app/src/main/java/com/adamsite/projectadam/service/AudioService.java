@@ -3,17 +3,18 @@ package com.adamsite.projectadam.service;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
@@ -71,18 +72,20 @@ public class AudioService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction().equalsIgnoreCase(ACTION_PLAY) && intent.getParcelableArrayListExtra("tracklist") != null) {
-            trackList = intent.getParcelableArrayListExtra("tracklist");
-            position = intent.getIntExtra("position", 0);
+        if (intent != null) {
+            if (intent.getAction().equalsIgnoreCase(ACTION_PLAY) && intent.getParcelableArrayListExtra("tracklist") != null) {
+                trackList = intent.getParcelableArrayListExtra("tracklist");
+                position = intent.getIntExtra("position", 0);
+            }
+
+            if (mMediaSession == null) {
+                initMediaSessions();
+            }
+
+            handleIntent(intent);
+
+            Log.d("MediaPlayerService", "onStartCommand");
         }
-
-        if (mMediaSession == null) {
-            initMediaSessions();
-        }
-
-        handleIntent(intent);
-
-        Log.d("MediaPlayerService", "onStartCommand");
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -98,6 +101,8 @@ public class AudioService extends Service {
         if (intent == null || intent.getAction() == null) {
             return;
         }
+
+        MediaButtonReceiver.handleIntent(mMediaSession, intent);
 
         String action = intent.getAction();
 
@@ -179,6 +184,14 @@ public class AudioService extends Service {
         Toast.makeText(getApplicationContext(), "init mediasession", Toast.LENGTH_SHORT).show();
         Log.d("MediaPlayerService", "init mediasession");
 
+        ComponentName eventReceiver = new ComponentName(getApplicationContext().getPackageName(), AudioIntentReceiver.class.getName());
+        PendingIntent buttonReceiverIntent = PendingIntent.getBroadcast(
+                getApplicationContext(),
+                0,
+                new Intent(Intent.ACTION_MEDIA_BUTTON),
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
         playbackState = new PlaybackStateCompat.Builder()
                 .setActions(
                         PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE |
@@ -189,7 +202,7 @@ public class AudioService extends Service {
                 .setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f, SystemClock.elapsedRealtime())
                 .build();
 
-        mMediaSession = new MediaSessionCompat(getApplicationContext(), "mMediaSession");
+        mMediaSession = new MediaSessionCompat(getApplicationContext(), "mMediaSession", eventReceiver, buttonReceiverIntent);
         mMediaSession.setPlaybackToLocal(AudioManager.STREAM_MUSIC);
         mMediaSession.setPlaybackState(playbackState);
         mMediaSession.setActive(true);
@@ -235,8 +248,12 @@ public class AudioService extends Service {
 //                                          Toast.makeText(getApplicationContext(), String.valueOf(playbackState.getState()), Toast.LENGTH_SHORT).show();
                                           } else {
                                               try {
+                                                  if (mMediaPlayer == null) {
+                                                      mMediaPlayer = new MediaPlayer();
+                                                  }
                                                   mMediaPlayer.reset();
-                                                  mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(trackList.get(position).getAudioURL()));
+//                                                  mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(trackList.get(position).getAudioURL()));
+                                                  mMediaPlayer.setDataSource(trackList.get(position).getAudioURL());
                                                   mMediaPlayer.prepareAsync();
                                                   actionString = "playing";
                                               } catch (IOException e) {
