@@ -30,7 +30,9 @@ import com.adamsite.projectadam.receiver.AudioIntentReceiver;
 import java.io.IOException;
 import java.util.List;
 
-public class AudioService extends Service {
+public class AudioService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener{
+
+    public static final String TAG_SESSION = "com.adamsite.projectadam.mediasession";
 
     public static final String ACTION_PLAY = "com.adamsite.projectadam.action.play";
     public static final String ACTION_PAUSE = "com.adamsite.projectadam.action.pause";
@@ -41,17 +43,183 @@ public class AudioService extends Service {
     public static final String ACTION_STOP = "com.adamsite.projectadam.action.stop";
     public static final String ACTION_NOISY = "com.adamsite.projectadam.action.noisy";
 
-    public static final int NOTIFICATION_ID = 1;
+    private static final int NOTIFICATION_ID = 1;
 
     private MediaPlayer mMediaPlayer;
     private MediaSessionCompat mMediaSession;
     private MediaControllerCompat mMediaController;
-    private PlaybackStateCompat playbackState;
+    private PlaybackStateCompat mPlaybackState;
     private AudioIntentReceiver audioIntentReceiver;
 
     private List<VKAudio> trackList;
     private int position;
-    private String actionString = "stopped";
+
+    private MediaSessionCompat.Callback mMediaSessionCallback = new MediaSessionCompat.Callback() {
+        @Override
+        public void onPlay() {
+            switch (mPlaybackState.getState()) {
+                case PlaybackStateCompat.STATE_PAUSED:
+                    mMediaPlayer.start();
+
+                    mPlaybackState = new PlaybackStateCompat.Builder()
+                            .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f)
+                            .build();
+                    mMediaSession.setPlaybackState(mPlaybackState);
+
+                    Log.d("MediaPlayerService", "onPlay");
+                    Toast.makeText(getApplicationContext(), "onPlay", Toast.LENGTH_SHORT).show();
+                    break;
+
+                case PlaybackStateCompat.STATE_PLAYING:
+                case PlaybackStateCompat.STATE_SKIPPING_TO_NEXT:
+                case PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS:
+                case PlaybackStateCompat.STATE_NONE:
+                    mMediaPlayer.reset();
+                    try {
+                        mMediaPlayer.setDataSource(trackList.get(position).getAudioURL());
+                    } catch (IOException e) {
+                        mPlaybackState = new PlaybackStateCompat.Builder()
+                                .setState(PlaybackStateCompat.STATE_ERROR, 0, 1.0f)
+                                .build();
+                        mMediaSession.setPlaybackState(mPlaybackState);
+
+                        Log.e("MediaPlayerService", e.getMessage());
+                        Toast.makeText(getApplicationContext(), "IOException", Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+
+                    mPlaybackState = new PlaybackStateCompat.Builder()
+                            .setState(PlaybackStateCompat.STATE_CONNECTING, 0, 1.0f)
+                            .build();
+                    mMediaSession.setPlaybackState(mPlaybackState);
+
+                    mMediaPlayer.prepareAsync();
+                    break;
+            }
+            buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE));
+        }
+
+        @Override
+        public void onPause() {
+            switch (mPlaybackState.getState()) {
+                case PlaybackStateCompat.STATE_PLAYING:
+                    Log.d("MediaPlayerService", "onPause");
+                    Toast.makeText(getApplicationContext(), "onPause", Toast.LENGTH_SHORT).show();
+
+                    mMediaPlayer.pause();
+                    mPlaybackState = new PlaybackStateCompat.Builder()
+                            .setState(PlaybackStateCompat.STATE_PAUSED, 0, 1.0f)
+                            .build();
+                    mMediaSession.setPlaybackState(mPlaybackState);
+
+                    buildNotification(generateAction(R.drawable.ic_play_arrow_white_24dp, "Play", ACTION_PLAY));
+                    break;
+            }
+        }
+
+        @Override
+        public void onSkipToNext() {
+            Log.d("MediaPlayerService", "onSkipToNext");
+            Toast.makeText(getApplicationContext(), "onSkipToNext", Toast.LENGTH_SHORT).show();
+
+            if (position < trackList.size() - 1) {
+                position++;
+            } else {
+                position = 0;
+            }
+
+            mPlaybackState = new PlaybackStateCompat.Builder()
+                    .setState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT, 0, 1.0f)
+                    .build();
+            mMediaSession.setPlaybackState(mPlaybackState);
+            onPlay();
+        }
+
+        @Override
+        public void onSkipToPrevious() {
+            Log.d("MediaPlayerService", "onSkipToPrevious");
+            Toast.makeText(getApplicationContext(), "onSkipToPrevious", Toast.LENGTH_SHORT).show();
+
+            if (position > 0) {
+                position--;
+            } else {
+                position = trackList.size() - 1;
+            }
+
+            mPlaybackState = new PlaybackStateCompat.Builder()
+                    .setState(PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS, 0, 1.0f)
+                    .build();
+            mMediaSession.setPlaybackState(mPlaybackState);
+            onPlay();
+        }
+
+        @Override
+        public void onFastForward() {
+            switch (mPlaybackState.getState()) {
+                case PlaybackStateCompat.STATE_PLAYING:
+                    mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition() + 10000);
+
+                    Log.d("MediaPlayerService", "onRewind");
+                    Toast.makeText(getApplicationContext(), "onRewind", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+
+        @Override
+        public void onRewind() {
+            switch (mPlaybackState.getState()) {
+                case PlaybackStateCompat.STATE_PLAYING:
+                    mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition() - 10000);
+
+                    Log.d("MediaPlayerService", "onRewind");
+                    Toast.makeText(getApplicationContext(), "onRewind", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+
+        @Override
+        public void onStop() {
+            mPlaybackState = new PlaybackStateCompat.Builder()
+                    .setState(PlaybackStateCompat.STATE_STOPPED, 0, 1.0f)
+                    .build();
+            mMediaSession.setPlaybackState(mPlaybackState);
+
+            Log.d("MediaPlayerService", "onStop");
+            Toast.makeText(getApplicationContext(), "onStop", Toast.LENGTH_SHORT).show();
+
+            stopSelf();
+        }
+
+        @Override
+        public void onSeekTo(long pos) {
+            mMediaPlayer.seekTo((int)pos);
+        }
+    };
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        switch (mPlaybackState.getState()) {
+            case PlaybackStateCompat.STATE_CONNECTING:
+                mMediaPlayer.start();
+
+                mPlaybackState = new PlaybackStateCompat.Builder()
+                        .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f)
+                        .build();
+                mMediaSession.setPlaybackState(mPlaybackState);
+                break;
+        }
+        Log.d("MediaPlayerService", "onPrepared");
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        Toast.makeText(getApplicationContext(), "track end", Toast.LENGTH_SHORT).show();
+        switch (mPlaybackState.getState()) {
+            case PlaybackStateCompat.STATE_PLAYING:
+                mMediaController.getTransportControls().skipToNext();
+                break;
+        }
+    }
 
     @Override
     public void onCreate() {
@@ -60,15 +228,30 @@ public class AudioService extends Service {
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
-//        intentFilter.addAction(Intent.ACTION_MEDIA_BUTTON);
         audioIntentReceiver = new AudioIntentReceiver();
         getApplicationContext().registerReceiver(audioIntentReceiver, intentFilter);
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d("MediaPlayerService", "onDestroy");
+
+        mPlaybackState = new PlaybackStateCompat.Builder()
+                .setState(PlaybackStateCompat.STATE_NONE, 0, 1.0f)
+                .build();
+        mMediaSession.setPlaybackState(mPlaybackState);
+
+        mMediaPlayer.release();
+        mMediaSession.release();
+        getApplicationContext().unregisterReceiver(audioIntentReceiver);
+        stopForeground(true);
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null) {
-            if (intent.getAction().equalsIgnoreCase(ACTION_PLAY) && intent.getParcelableArrayListExtra("tracklist") != null) {
+        if (intent != null && intent.getAction() != null) {
+            if (intent.getParcelableArrayListExtra("tracklist") != null) {
                 trackList = intent.getParcelableArrayListExtra("tracklist");
                 position = intent.getIntExtra("position", 0);
             }
@@ -78,18 +261,50 @@ public class AudioService extends Service {
             }
 
             handleIntent(intent);
-
-            Log.d("MediaPlayerService", "onStartCommand");
         }
+        Log.d("MediaPlayerService", "onStartCommand");
         return super.onStartCommand(intent, flags, startId);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d("MediaPlayerService", "onDestroy");
-        getApplicationContext().unregisterReceiver(audioIntentReceiver);
-        stopForeground(true);
+    private void initMediaSessions() {
+        Toast.makeText(getApplicationContext(), "init mediasession", Toast.LENGTH_SHORT).show();
+        Log.d("MediaPlayerService", "init mediasession");
+
+        ComponentName eventReceiver = new ComponentName(getApplicationContext().getPackageName(), AudioIntentReceiver.class.getName());
+        PendingIntent buttonReceiverIntent = PendingIntent.getBroadcast(
+                getApplicationContext(),
+                0,
+                new Intent(Intent.ACTION_MEDIA_BUTTON),
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        mPlaybackState = new PlaybackStateCompat.Builder()
+                .setActions(
+                        PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE |
+                        PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_STOP |
+                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                        PlaybackStateCompat.ACTION_SEEK_TO | PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM)
+                .setState(PlaybackStateCompat.STATE_NONE, position, 1.0f, SystemClock.elapsedRealtime())
+                .build();
+
+        mMediaSession = new MediaSessionCompat(getApplicationContext(), TAG_SESSION, eventReceiver, buttonReceiverIntent);
+//        mMediaSession.setPlaybackToLocal(AudioManager.STREAM_MUSIC);
+        mMediaSession.setPlaybackState(mPlaybackState);
+        mMediaSession.setActive(true);
+        mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS |
+                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS);
+        mMediaSession.setCallback(mMediaSessionCallback);
+
+        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mMediaPlayer.setOnPreparedListener(this);
+        mMediaPlayer.setOnCompletionListener(this);
+
+        try {
+            mMediaController = new MediaControllerCompat(getApplicationContext(), mMediaSession.getSessionToken());
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     private void handleIntent(Intent intent) {
@@ -116,8 +331,9 @@ public class AudioService extends Service {
         } else if (action.equalsIgnoreCase(ACTION_STOP)) {
             mMediaController.getTransportControls().stop();
         } else if (action.equalsIgnoreCase(ACTION_NOISY)) {
-            Toast.makeText(getApplicationContext(), "Headphones Disconnected", Toast.LENGTH_SHORT).show();
             mMediaController.getTransportControls().pause();
+            Log.d("MediaPlayerService", "onAudioBecomingNoisy");
+            Toast.makeText(getApplicationContext(), "Headphones Disconnected", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -129,13 +345,17 @@ public class AudioService extends Service {
         return new NotificationCompat.Action.Builder(icon, title, actionPendingIntent).build();
     }
 
-    private void buildNotification(NotificationCompat.Action action, String actionString) {
+    private void buildNotification(NotificationCompat.Action action) {
         Intent myAudioFragmentIntent = new Intent(getApplicationContext(), MainActivity.class);
-        PendingIntent myAudioFragmentPendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, myAudioFragmentIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent myAudioFragmentPendingIntent =PendingIntent.getActivity(
+                getApplicationContext(), 0, myAudioFragmentIntent, PendingIntent.FLAG_UPDATE_CURRENT
+        );
 
         Intent stopServiceIntent = new Intent(getApplicationContext(), AudioService.class);
         stopServiceIntent.setAction(ACTION_STOP);
-        PendingIntent stopServicePendingIntent = PendingIntent.getService(getApplicationContext(), 1, stopServiceIntent, 0);
+        PendingIntent stopServicePendingIntent = PendingIntent.getService(
+                getApplicationContext(), 1, stopServiceIntent, 0
+        );
 
         android.support.v4.app.NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -161,9 +381,8 @@ public class AudioService extends Service {
                                 .setCancelButtonIntent(stopServicePendingIntent)
                 );
 
-        switch (actionString) {
-            case ACTION_PAUSE:
-                builder.setSmallIcon(R.drawable.ic_pause_white_24dp);
+        switch (mPlaybackState.getState()) {
+            case  PlaybackStateCompat.STATE_PAUSED:
                 stopForeground(false);
                 break;
             default:
@@ -173,211 +392,6 @@ public class AudioService extends Service {
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(NOTIFICATION_ID, builder.build());
-    }
-
-    private void initMediaSessions() {
-        Toast.makeText(getApplicationContext(), "init mediasession", Toast.LENGTH_SHORT).show();
-        Log.d("MediaPlayerService", "init mediasession");
-
-        ComponentName eventReceiver = new ComponentName(getApplicationContext().getPackageName(), AudioIntentReceiver.class.getName());
-        PendingIntent buttonReceiverIntent = PendingIntent.getBroadcast(
-                getApplicationContext(),
-                0,
-                new Intent(Intent.ACTION_MEDIA_BUTTON),
-                PendingIntent.FLAG_UPDATE_CURRENT
-        );
-
-        playbackState = new PlaybackStateCompat.Builder()
-                .setActions(
-                        PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE |
-                        PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_STOP |
-                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-                        PlaybackStateCompat.ACTION_SEEK_TO | PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM |
-                        PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID  | PlaybackStateCompat.ACTION_PLAY_FROM_URI)
-                .setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f, SystemClock.elapsedRealtime())
-                .build();
-
-        mMediaSession = new MediaSessionCompat(getApplicationContext(), "mMediaSession", eventReceiver, buttonReceiverIntent);
-        mMediaSession.setPlaybackToLocal(AudioManager.STREAM_MUSIC);
-        mMediaSession.setPlaybackState(playbackState);
-        mMediaSession.setActive(true);
-        mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS | MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS);
-
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-
-        mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                if (actionString.equalsIgnoreCase("playing")) {
-                    mMediaPlayer.start();
-                }
-            }
-        });
-        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                Toast.makeText(getApplicationContext(), "track end", Toast.LENGTH_SHORT).show();
-                if (actionString.equalsIgnoreCase("playing")) {
-                    mMediaController.getTransportControls().skipToNext();
-                }
-            }
-        });
-
-        try {
-            mMediaController = new MediaControllerCompat(getApplicationContext(), mMediaSession.getSessionToken());
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-
-        mMediaSession.setCallback(new MediaSessionCompat.Callback() {
-                                      @Override
-                                      public void onPlay() {
-                                          super.onPlay();
-                                          if (actionString.equalsIgnoreCase("paused")) {
-                                              mMediaPlayer.start();
-                                              actionString = "playing";
-
-                                              Log.d("MediaPlayerService", "onPlay");
-                                              Toast.makeText(getApplicationContext(), "onPlay", Toast.LENGTH_SHORT).show();
-//                                          Toast.makeText(getApplicationContext(), String.valueOf(playbackState.getState()), Toast.LENGTH_SHORT).show();
-                                          } else {
-                                              try {
-                                                  if (mMediaPlayer == null) {
-                                                      mMediaPlayer = new MediaPlayer();
-                                                  }
-                                                  mMediaPlayer.reset();
-//                                                  mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(trackList.get(position).getAudioURL()));
-                                                  mMediaPlayer.setDataSource(trackList.get(position).getAudioURL());
-                                                  mMediaPlayer.prepareAsync();
-                                                  actionString = "playing";
-                                              } catch (IOException e) {
-                                                  e.printStackTrace();
-                                                  Toast.makeText(getApplicationContext(), "IOException", Toast.LENGTH_SHORT).show();
-                                              } catch (IllegalStateException e) {
-                                                  e.printStackTrace();
-                                                  Toast.makeText(getApplicationContext(), "IllegalStateException", Toast.LENGTH_SHORT).show();
-                                              }
-                                          }
-
-                                          for (VKAudio audio: trackList) {
-                                              audio.setAudioStatus(VKAudio.Status.OFF);
-                                          }
-                                          trackList.get(position).setAudioStatus(VKAudio.Status.PLAYING);
-
-                                          buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE), ACTION_PLAY);
-                                      }
-
-                                      @Override
-                                      public void onPause() {
-                                          super.onPause();
-                                          if (actionString.equalsIgnoreCase("playing")) {
-                                              mMediaPlayer.pause();
-                                              actionString = "paused";
-
-                                              for (VKAudio audio: trackList) {
-                                                  audio.setAudioStatus(VKAudio.Status.OFF);
-                                              }
-                                              trackList.get(position).setAudioStatus(VKAudio.Status.PAUSED);
-
-                                              Log.d("MediaPlayerService", "onPause");
-                                              Toast.makeText(getApplicationContext(), "onPause", Toast.LENGTH_SHORT).show();
-//                                          Toast.makeText(getApplicationContext(), String.valueOf(playbackState.getState()), Toast.LENGTH_SHORT).show();
-                                          }
-                                          buildNotification(generateAction(R.drawable.ic_play_arrow_white_24dp, "Play", ACTION_PLAY), ACTION_PAUSE);
-                                      }
-
-                                      @Override
-                                      public void onSkipToNext() {
-                                          super.onSkipToNext();
-                                          if (position < trackList.size() - 1) {
-                                              position++;
-                                          } else {
-                                              position = 0;
-                                          }
-                                          actionString = "playing";
-
-                                          Log.d("MediaPlayerService", "onSkipToNext");
-                                          Toast.makeText(getApplicationContext(), "onSkipToNext", Toast.LENGTH_SHORT).show();
-//                                          Toast.makeText(getApplicationContext(), String.valueOf(playbackState.getState()), Toast.LENGTH_SHORT).show();
-
-                                          onPlay();
-                                          buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE), ACTION_NEXT);
-                                      }
-
-                                      @Override
-                                      public void onSkipToPrevious() {
-                                          super.onSkipToPrevious();
-                                          if (position > 0) {
-                                              position--;
-                                          } else {
-                                              position = trackList.size() - 1;
-                                          }
-                                          actionString = "playing";
-
-                                          Log.d("MediaPlayerService", "onSkipToPrevious");
-                                          Toast.makeText(getApplicationContext(), "onSkipToPrevious", Toast.LENGTH_SHORT).show();
-//                                          Toast.makeText(getApplicationContext(), String.valueOf(playbackState.getState()), Toast.LENGTH_SHORT).show();
-
-                                          onPlay();
-                                          buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE), ACTION_PREVIOUS);
-                                      }
-
-                                      @Override
-                                      public void onRewind() {
-                                          super.onRewind();
-                                          if (actionString.equalsIgnoreCase("playing")) {
-                                              mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition() - 10000);
-                                              Log.d("MediaPlayerService", "onRewind");
-                                              Toast.makeText(getApplicationContext(), "onRewind", Toast.LENGTH_SHORT).show();
-                                          }
-                                      }
-
-                                      @Override
-                                      public void onFastForward() {
-                                          super.onFastForward();
-                                          if (actionString.equalsIgnoreCase("playing")) {
-                                              mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition() + 10000);
-                                              Log.d("MediaPlayerService", "onFastForward");
-                                              Toast.makeText(getApplicationContext(), "onFastForward", Toast.LENGTH_SHORT).show();
-                                          }
-                                      }
-
-                                      @Override
-                                      public void onStop() {
-                                          super.onStop();
-                                          try {
-                                              if (mMediaPlayer.isPlaying()) {
-                                                  mMediaPlayer.stop();
-                                              }
-                                              mMediaPlayer.release();
-                                              mMediaPlayer = null;
-                                              mMediaSession.release();
-                                              actionString = "stopped";
-
-                                              for (VKAudio audio: trackList) {
-                                                  audio.setAudioStatus(VKAudio.Status.OFF);
-                                              }
-
-                                              Log.d("MediaPlayerService", "onStop");
-                                              Toast.makeText(getApplicationContext(), "onStop", Toast.LENGTH_SHORT).show();
-//                                          Toast.makeText(getApplicationContext(), String.valueOf(playbackState.getState()), Toast.LENGTH_SHORT).show();
-                                          } catch (IllegalStateException e) {
-                                              Log.e("MediaPlayerService", e.getMessage());
-                                          }
-                                          NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                                          notificationManager.cancel(NOTIFICATION_ID);
-                                          Intent intent = new Intent(getApplicationContext(), AudioService.class);
-                                          stopService(intent);
-                                      }
-
-                                      @Override
-                                      public void onSeekTo(long pos) {
-                                          super.onSeekTo(pos);
-                                          actionString = "playing";
-                                      }
-                                  }
-        );
     }
 
     @Override
