@@ -16,6 +16,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Filter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,7 +37,7 @@ import com.vk.sdk.api.model.VkAudioArray;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyAudioFragment extends android.support.v4.app.Fragment implements RecyclerViewHolder.ActionListener{
+public class MyAudioFragment extends android.support.v4.app.Fragment implements RecyclerViewHolder.ActionListener, Filter.FilterListener{
 
     private RecyclerView recyclerView;
     private TextView tvEmptyView;
@@ -128,15 +129,27 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
     }
 
     public void myAudioSearch(String query) {
-        recyclerViewAdapter.getFilter().filter(query);
-        Toast.makeText(getContext(), String.valueOf(recyclerViewAdapter.getRealItemCount()), Toast.LENGTH_SHORT).show();
+        recyclerViewAdapter.getFilter().filter(query, MyAudioFragment.this);
+    }
+
+    @Override
+    public void onFilterComplete(int count) {
+        checkIfEmpty(count);
     }
 
     public void checkIfEmpty() {
-        if (recyclerViewAdapter.getRealItemCount() == 0) {
-            tvEmptyView.setVisibility(View.VISIBLE);
-        } else {
+        if (recyclerViewAdapter.getRealItemCount() > 0) {
             tvEmptyView.setVisibility(View.GONE);
+        } else {
+            tvEmptyView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void checkIfEmpty(int count) {
+        if (count > 0) {
+            tvEmptyView.setVisibility(View.GONE);
+        } else {
+            tvEmptyView.setVisibility(View.VISIBLE);
         }
     }
 

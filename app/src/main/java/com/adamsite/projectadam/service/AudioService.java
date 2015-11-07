@@ -54,11 +54,6 @@ public class AudioService extends Service {
     private String actionString = "stopped";
 
     @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @Override
     public void onCreate() {
         super.onCreate();
         Log.d("MediaPlayerService", "onCreate");
@@ -357,6 +352,7 @@ public class AudioService extends Service {
                                               }
                                               mMediaPlayer.release();
                                               mMediaPlayer = null;
+                                              mMediaSession.release();
                                               actionString = "stopped";
 
                                               for (VKAudio audio: trackList) {
@@ -385,8 +381,12 @@ public class AudioService extends Service {
     }
 
     @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
     public boolean onUnbind(Intent intent) {
-        mMediaSession.release();
         return super.onUnbind(intent);
     }
 }
