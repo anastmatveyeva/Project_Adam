@@ -37,7 +37,8 @@ import com.vk.sdk.api.model.VkAudioArray;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyAudioFragment extends android.support.v4.app.Fragment implements RecyclerViewHolder.ActionListener, Filter.FilterListener{
+public class MyAudioFragment extends android.support.v4.app.Fragment implements
+        RecyclerViewHolder.ActionListener, Filter.FilterListener {
 
     private RecyclerView recyclerView;
     private TextView tvEmptyView;
@@ -48,6 +49,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
 
         void showMyAudioFragment();
     }
+
     public MyAudioFragment() {
         super();
     }
@@ -186,10 +188,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
 
     @Override
     public void onClick(int position) {
-        Intent intent = new Intent(getActivity().getApplicationContext(), AudioService.class);
-        intent.setAction(AudioService.ACTION_PLAY);
-
-//        //TODO:move setAudioStatus() to service
+//        TODO:move setAudioStatus() to service
 //        recyclerViewAdapter.getItem(position).setAudioStatus(VKAudio.Status.PLAYING);
 //
 //        ArrayList<VKAudio> currentDisplayedTracks = new ArrayList<>();
@@ -202,15 +201,15 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements 
 //        recyclerViewAdapter.notifyDataSetChanged();
 
 
-
         ArrayList<VKAudio> currentDisplayedTracks = new ArrayList<>();
         for(int i=0; i< recyclerViewAdapter.getRealItemCount(); i++) {
             currentDisplayedTracks.add(recyclerViewAdapter.getItem(i));
         }
 
+        Intent intent = new Intent(getActivity().getApplicationContext(), AudioService.class);
+        intent.setAction(AudioService.ACTION_PLAY);
 //        intent.putParcelableArrayListExtra("tracklist", (ArrayList<VKAudio>) recyclerViewAdapter.getItems());
         intent.putParcelableArrayListExtra("tracklist", currentDisplayedTracks);
-
         intent.putExtra("position", position);
         getActivity().getApplicationContext().startService(intent);
     }

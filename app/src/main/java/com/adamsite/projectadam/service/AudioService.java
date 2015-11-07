@@ -52,23 +52,30 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     private AudioIntentReceiver audioIntentReceiver;
 
     private List<VKAudio> trackList;
+    private long currentAudioID;
     private int position;
 
     private MediaSessionCompat.Callback mMediaSessionCallback = new MediaSessionCompat.Callback() {
         @Override
         public void onPlay() {
+            Log.d("MediaPlayerService", "onPlay");
+
             switch (mPlaybackState.getState()) {
                 case PlaybackStateCompat.STATE_PAUSED:
-                    mMediaPlayer.start();
+                    if (currentAudioID == trackList.get(position).getAudioID()) {
+                        mMediaPlayer.start();
 
-                    mPlaybackState = new PlaybackStateCompat.Builder()
-                            .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f)
-                            .build();
-                    mMediaSession.setPlaybackState(mPlaybackState);
+                        mPlaybackState = new PlaybackStateCompat.Builder()
+                                .setState(PlaybackStateCompat.STATE_PLAYING, mMediaPlayer.getCurrentPosition(), 1.0f)
+                                .build();
+                        mMediaSession.setPlaybackState(mPlaybackState);
+                        buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE));
 
-                    Log.d("MediaPlayerService", "onPlay");
-                    Toast.makeText(getApplicationContext(), "onPlay", Toast.LENGTH_SHORT).show();
-                    break;
+                        Toast.makeText(getApplicationContext(), "onPlay", Toast.LENGTH_SHORT).show();
+                        break;
+                    } else {
+                        currentAudioID = trackList.get(position).getAudioID();
+                    }
 
                 case PlaybackStateCompat.STATE_PLAYING:
                 case PlaybackStateCompat.STATE_SKIPPING_TO_NEXT:
@@ -79,9 +86,10 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
                         mMediaPlayer.setDataSource(trackList.get(position).getAudioURL());
                     } catch (IOException e) {
                         mPlaybackState = new PlaybackStateCompat.Builder()
-                                .setState(PlaybackStateCompat.STATE_ERROR, 0, 1.0f)
+                                .setState(PlaybackStateCompat.STATE_ERROR, 0, 0.0f)
                                 .build();
                         mMediaSession.setPlaybackState(mPlaybackState);
+                        buildNotification(generateAction(R.drawable.ic_play_arrow_white_24dp, "Play", ACTION_PLAY));
 
                         Log.e("MediaPlayerService", e.getMessage());
                         Toast.makeText(getApplicationContext(), "IOException", Toast.LENGTH_SHORT).show();
@@ -89,26 +97,27 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
                     }
 
                     mPlaybackState = new PlaybackStateCompat.Builder()
-                            .setState(PlaybackStateCompat.STATE_CONNECTING, 0, 1.0f)
+                            .setState(PlaybackStateCompat.STATE_CONNECTING, 0, 0.0f)
                             .build();
                     mMediaSession.setPlaybackState(mPlaybackState);
 
                     mMediaPlayer.prepareAsync();
+                    buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE));
                     break;
             }
-            buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE));
         }
 
         @Override
         public void onPause() {
             switch (mPlaybackState.getState()) {
+                case PlaybackStateCompat.STATE_CONNECTING:
                 case PlaybackStateCompat.STATE_PLAYING:
                     Log.d("MediaPlayerService", "onPause");
                     Toast.makeText(getApplicationContext(), "onPause", Toast.LENGTH_SHORT).show();
 
                     mMediaPlayer.pause();
                     mPlaybackState = new PlaybackStateCompat.Builder()
-                            .setState(PlaybackStateCompat.STATE_PAUSED, 0, 1.0f)
+                            .setState(PlaybackStateCompat.STATE_PAUSED, mMediaPlayer.getCurrentPosition(), 0.0f)
                             .build();
                     mMediaSession.setPlaybackState(mPlaybackState);
 
@@ -129,7 +138,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
             }
 
             mPlaybackState = new PlaybackStateCompat.Builder()
-                    .setState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT, 0, 1.0f)
+                    .setState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT, mMediaPlayer.getCurrentPosition(), 0.0f)
                     .build();
             mMediaSession.setPlaybackState(mPlaybackState);
             onPlay();
@@ -147,7 +156,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
             }
 
             mPlaybackState = new PlaybackStateCompat.Builder()
-                    .setState(PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS, 0, 1.0f)
+                    .setState(PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS, mMediaPlayer.getCurrentPosition(), 0.0f)
                     .build();
             mMediaSession.setPlaybackState(mPlaybackState);
             onPlay();
@@ -180,7 +189,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         @Override
         public void onStop() {
             mPlaybackState = new PlaybackStateCompat.Builder()
-                    .setState(PlaybackStateCompat.STATE_STOPPED, 0, 1.0f)
+                    .setState(PlaybackStateCompat.STATE_STOPPED, 0, 0.0f)
                     .build();
             mMediaSession.setPlaybackState(mPlaybackState);
 
@@ -238,7 +247,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         Log.d("MediaPlayerService", "onDestroy");
 
         mPlaybackState = new PlaybackStateCompat.Builder()
-                .setState(PlaybackStateCompat.STATE_NONE, 0, 1.0f)
+                .setState(PlaybackStateCompat.STATE_NONE, 0, 0.0f)
                 .build();
         mMediaSession.setPlaybackState(mPlaybackState);
 
@@ -280,11 +289,14 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
         mPlaybackState = new PlaybackStateCompat.Builder()
                 .setActions(
-                        PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE |
-                        PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_STOP |
-                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-                        PlaybackStateCompat.ACTION_SEEK_TO | PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM)
-                .setState(PlaybackStateCompat.STATE_NONE, position, 1.0f, SystemClock.elapsedRealtime())
+                        PlaybackStateCompat.ACTION_PLAY
+                        | PlaybackStateCompat.ACTION_PLAY_PAUSE
+                        | PlaybackStateCompat.ACTION_PAUSE
+                        | PlaybackStateCompat.ACTION_STOP
+                        | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                        | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                        | PlaybackStateCompat.ACTION_SEEK_TO)
+                .setState(PlaybackStateCompat.STATE_NONE, 0, 0.0f, SystemClock.elapsedRealtime())
                 .build();
 
         mMediaSession = new MediaSessionCompat(getApplicationContext(), TAG_SESSION, eventReceiver, buttonReceiverIntent);
@@ -303,7 +315,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         try {
             mMediaController = new MediaControllerCompat(getApplicationContext(), mMediaSession.getSessionToken());
         } catch (RemoteException e) {
-            e.printStackTrace();
+            Log.e("MediaPlayerService", e.getMessage());
         }
     }
 
@@ -314,26 +326,33 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
         MediaButtonReceiver.handleIntent(mMediaSession, intent);
 
-        String action = intent.getAction();
-
-        if (action.equalsIgnoreCase(ACTION_PLAY)) {
-            mMediaController.getTransportControls().play();
-        } else if (action.equalsIgnoreCase(ACTION_PAUSE)) {
-            mMediaController.getTransportControls().pause();
-        } else if (action.equalsIgnoreCase(ACTION_FAST_FORWARD)) {
-            mMediaController.getTransportControls().fastForward();
-        } else if (action.equalsIgnoreCase(ACTION_REWIND)) {
-            mMediaController.getTransportControls().rewind();
-        } else if (action.equalsIgnoreCase(ACTION_PREVIOUS)) {
-            mMediaController.getTransportControls().skipToPrevious();
-        } else if (action.equalsIgnoreCase(ACTION_NEXT)) {
-            mMediaController.getTransportControls().skipToNext();
-        } else if (action.equalsIgnoreCase(ACTION_STOP)) {
-            mMediaController.getTransportControls().stop();
-        } else if (action.equalsIgnoreCase(ACTION_NOISY)) {
-            mMediaController.getTransportControls().pause();
-            Log.d("MediaPlayerService", "onAudioBecomingNoisy");
-            Toast.makeText(getApplicationContext(), "Headphones Disconnected", Toast.LENGTH_SHORT).show();
+        switch (intent.getAction()) {
+            case ACTION_PLAY:
+                mMediaController.getTransportControls().play();
+                break;
+            case ACTION_PAUSE:
+                mMediaController.getTransportControls().pause();
+                break;
+            case ACTION_FAST_FORWARD:
+                mMediaController.getTransportControls().fastForward();
+                break;
+            case ACTION_REWIND:
+                mMediaController.getTransportControls().rewind();
+                break;
+            case ACTION_PREVIOUS:
+                mMediaController.getTransportControls().skipToPrevious();
+                break;
+            case ACTION_NEXT:
+                mMediaController.getTransportControls().skipToNext();
+                break;
+            case ACTION_STOP:
+                mMediaController.getTransportControls().stop();
+                break;
+            case ACTION_NOISY:
+                mMediaController.getTransportControls().pause();
+                Log.d("MediaPlayerService", "onAudioBecomingNoisy");
+                Toast.makeText(getApplicationContext(), "Headphones Disconnected", Toast.LENGTH_SHORT).show();
+                break;
         }
     }
 
@@ -346,16 +365,15 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     private void buildNotification(NotificationCompat.Action action) {
-        Intent myAudioFragmentIntent = new Intent(getApplicationContext(), MainActivity.class);
+        Intent contentIntent = new Intent(getApplicationContext(), MainActivity.class)
+                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent myAudioFragmentPendingIntent =PendingIntent.getActivity(
-                getApplicationContext(), 0, myAudioFragmentIntent, PendingIntent.FLAG_UPDATE_CURRENT
-        );
+                getApplicationContext(), 0, contentIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-        Intent stopServiceIntent = new Intent(getApplicationContext(), AudioService.class);
-        stopServiceIntent.setAction(ACTION_STOP);
+        Intent deleteIntent = new Intent(getApplicationContext(), AudioService.class);
+        deleteIntent.setAction(ACTION_STOP);
         PendingIntent stopServicePendingIntent = PendingIntent.getService(
-                getApplicationContext(), 1, stopServiceIntent, 0
-        );
+                getApplicationContext(), 1, deleteIntent, 0);
 
         android.support.v4.app.NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
