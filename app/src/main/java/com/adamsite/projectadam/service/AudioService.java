@@ -30,7 +30,9 @@ import com.adamsite.projectadam.receiver.AudioIntentReceiver;
 import java.io.IOException;
 import java.util.List;
 
-public class AudioService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener{
+public class AudioService extends Service implements
+        MediaPlayer.OnPreparedListener,
+        MediaPlayer.OnCompletionListener {
 
     public static final String TAG_SESSION = "com.adamsite.projectadam.mediasession";
 
@@ -168,8 +170,8 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
                 case PlaybackStateCompat.STATE_PLAYING:
                     mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition() + 10000);
 
-                    Log.d("MediaPlayerService", "onRewind");
-                    Toast.makeText(getApplicationContext(), "onRewind", Toast.LENGTH_SHORT).show();
+                    Log.d("MediaPlayerService", "onFastForward");
+                    Toast.makeText(getApplicationContext(), "onFastForward", Toast.LENGTH_SHORT).show();
                     break;
             }
         }
@@ -400,7 +402,8 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
                 );
 
         switch (mPlaybackState.getState()) {
-            case  PlaybackStateCompat.STATE_PAUSED:
+            case PlaybackStateCompat.STATE_ERROR:
+            case PlaybackStateCompat.STATE_PAUSED:
                 stopForeground(false);
                 break;
             default:
