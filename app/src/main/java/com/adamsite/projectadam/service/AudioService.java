@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -53,6 +54,8 @@ public class AudioService extends Service implements
     private PlaybackStateCompat mPlaybackState;
     private AudioIntentReceiver audioIntentReceiver;
 
+    WifiManager.WifiLock wifiLock;
+
     private List<VKAudio> trackList;
     private long currentAudioID;
     private int position;
@@ -61,6 +64,7 @@ public class AudioService extends Service implements
         @Override
         public void onPlay() {
             Log.d("MediaPlayerService", "onPlay");
+            Toast.makeText(getApplicationContext(), "onPlay", Toast.LENGTH_SHORT).show();
 
             switch (mPlaybackState.getState()) {
                 case PlaybackStateCompat.STATE_PAUSED:
@@ -71,9 +75,9 @@ public class AudioService extends Service implements
                                 .setState(PlaybackStateCompat.STATE_PLAYING, mMediaPlayer.getCurrentPosition(), 1.0f)
                                 .build();
                         mMediaSession.setPlaybackState(mPlaybackState);
-                        buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE));
+                        wifiLock.acquire();
 
-                        Toast.makeText(getApplicationContext(), "onPlay", Toast.LENGTH_SHORT).show();
+                        buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE));
                         break;
                     } else {
                         currentAudioID = trackList.get(position).getAudioID();
@@ -102,6 +106,7 @@ public class AudioService extends Service implements
                             .setState(PlaybackStateCompat.STATE_CONNECTING, 0, 0.0f)
                             .build();
                     mMediaSession.setPlaybackState(mPlaybackState);
+                    wifiLock.acquire();
 
                     mMediaPlayer.prepareAsync();
                     buildNotification(generateAction(R.drawable.ic_pause_white_24dp, "Pause", ACTION_PAUSE));
@@ -122,6 +127,10 @@ public class AudioService extends Service implements
                             .setState(PlaybackStateCompat.STATE_PAUSED, mMediaPlayer.getCurrentPosition(), 0.0f)
                             .build();
                     mMediaSession.setPlaybackState(mPlaybackState);
+
+                    if (wifiLock.isHeld()) {
+                        wifiLock.release();
+                    }
 
                     buildNotification(generateAction(R.drawable.ic_play_arrow_white_24dp, "Play", ACTION_PLAY));
                     break;
@@ -195,6 +204,10 @@ public class AudioService extends Service implements
                     .build();
             mMediaSession.setPlaybackState(mPlaybackState);
 
+            if (wifiLock.isHeld()) {
+                wifiLock.release();
+            }
+
             Log.d("MediaPlayerService", "onStop");
             Toast.makeText(getApplicationContext(), "onStop", Toast.LENGTH_SHORT).show();
 
@@ -237,6 +250,9 @@ public class AudioService extends Service implements
         super.onCreate();
         Log.d("MediaPlayerService", "onCreate");
 
+        wifiLock = ((WifiManager) getSystemService(Context.WIFI_SERVICE))
+                .createWifiLock(WifiManager.WIFI_MODE_FULL, "wifiLock");
+
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         audioIntentReceiver = new AudioIntentReceiver();
@@ -255,6 +271,9 @@ public class AudioService extends Service implements
 
         mMediaPlayer.release();
         mMediaSession.release();
+        if (wifiLock.isHeld()) {
+            wifiLock.release();
+        }
         getApplicationContext().unregisterReceiver(audioIntentReceiver);
         stopForeground(true);
     }
@@ -265,6 +284,9 @@ public class AudioService extends Service implements
             if (intent.getParcelableArrayListExtra("tracklist") != null) {
                 trackList = intent.getParcelableArrayListExtra("tracklist");
                 position = intent.getIntExtra("position", 0);
+                if (currentAudioID == 0) {
+                    currentAudioID = trackList.get(position).getAudioID();
+                }
             }
 
             if (mMediaSession == null) {
