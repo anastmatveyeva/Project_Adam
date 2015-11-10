@@ -211,6 +211,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements
 //        intent.putParcelableArrayListExtra("tracklist", (ArrayList<VKAudio>) recyclerViewAdapter.getItems());
         intent.putParcelableArrayListExtra("tracklist", currentDisplayedTracks);
         intent.putExtra("position", position);
+        intent.putExtra("id", currentDisplayedTracks.get(position).getAudioID());
         getActivity().getApplicationContext().startService(intent);
     }
 

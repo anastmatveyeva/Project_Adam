@@ -54,10 +54,10 @@ public class AudioService extends Service implements
     private PlaybackStateCompat mPlaybackState;
     private AudioIntentReceiver audioIntentReceiver;
 
-    WifiManager.WifiLock wifiLock;
+    private WifiManager.WifiLock wifiLock;
 
     private List<VKAudio> trackList;
-    private long currentAudioID;
+    private int currentAudioID;
     private int position;
 
     private MediaSessionCompat.Callback mMediaSessionCallback = new MediaSessionCompat.Callback() {
@@ -285,7 +285,7 @@ public class AudioService extends Service implements
                 trackList = intent.getParcelableArrayListExtra("tracklist");
                 position = intent.getIntExtra("position", 0);
                 if (currentAudioID == 0) {
-                    currentAudioID = trackList.get(position).getAudioID();
+                    currentAudioID = intent.getIntExtra("id", 0);
                 }
             }
 
