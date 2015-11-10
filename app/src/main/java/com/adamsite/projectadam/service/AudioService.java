@@ -116,11 +116,13 @@ public class AudioService extends Service implements
 
         @Override
         public void onPause() {
+            Log.d("MediaPlayerService", "onPause");
+            Toast.makeText(getApplicationContext(), "onPause", Toast.LENGTH_SHORT).show();
+
             switch (mPlaybackState.getState()) {
                 case PlaybackStateCompat.STATE_CONNECTING:
                 case PlaybackStateCompat.STATE_PLAYING:
-                    Log.d("MediaPlayerService", "onPause");
-                    Toast.makeText(getApplicationContext(), "onPause", Toast.LENGTH_SHORT).show();
+                    currentAudioID = trackList.get(position).getAudioID();
 
                     mMediaPlayer.pause();
                     mPlaybackState = new PlaybackStateCompat.Builder()
@@ -147,6 +149,7 @@ public class AudioService extends Service implements
             } else {
                 position = 0;
             }
+            currentAudioID = trackList.get(position).getAudioID();
 
             mPlaybackState = new PlaybackStateCompat.Builder()
                     .setState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT, mMediaPlayer.getCurrentPosition(), 0.0f)
@@ -165,6 +168,7 @@ public class AudioService extends Service implements
             } else {
                 position = trackList.size() - 1;
             }
+            currentAudioID = trackList.get(position).getAudioID();
 
             mPlaybackState = new PlaybackStateCompat.Builder()
                     .setState(PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS, mMediaPlayer.getCurrentPosition(), 0.0f)
