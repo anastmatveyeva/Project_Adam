@@ -3,6 +3,7 @@ package com.adamsite.projectadam;
 import android.content.Intent;
 import android.widget.Toast;
 
+import com.adamsite.projectadam.activity.MainActivity;
 import com.vk.sdk.VKAccessToken;
 import com.vk.sdk.VKAccessTokenTracker;
 import com.vk.sdk.VKSdk;

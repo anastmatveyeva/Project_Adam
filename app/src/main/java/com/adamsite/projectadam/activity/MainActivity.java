@@ -1,4 +1,4 @@
-package com.adamsite.projectadam;
+package com.adamsite.projectadam.activity;
 
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -12,6 +12,8 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 
+import com.adamsite.projectadam.Const;
+import com.adamsite.projectadam.R;
 import com.adamsite.projectadam.fragments.LoginFragment;
 import com.adamsite.projectadam.fragments.LogoutFragment;
 import com.adamsite.projectadam.fragments.MyAudioFragment;

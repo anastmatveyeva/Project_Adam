@@ -1,4 +1,4 @@
-package com.adamsite.projectadam;
+package com.adamsite.projectadam.audiofocus;
 
 import android.content.Context;
 import android.media.AudioManager;

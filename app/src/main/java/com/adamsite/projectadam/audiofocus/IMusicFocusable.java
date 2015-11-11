@@ -1,4 +1,4 @@
-package com.adamsite.projectadam;
+package com.adamsite.projectadam.audiofocus;
 
 public interface IMusicFocusable {
     void onGainedAudioFocus();

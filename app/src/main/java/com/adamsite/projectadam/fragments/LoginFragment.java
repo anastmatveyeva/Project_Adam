@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.adamsite.projectadam.Const;
-import com.adamsite.projectadam.MainActivity;
+import com.adamsite.projectadam.activity.MainActivity;
 import com.adamsite.projectadam.R;
 import com.vk.sdk.VKSdk;
 

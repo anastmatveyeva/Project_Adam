@@ -23,7 +23,9 @@ import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.adamsite.projectadam.MainActivity;
+import com.adamsite.projectadam.audiofocus.AudioFocusHelper;
+import com.adamsite.projectadam.audiofocus.IMusicFocusable;
+import com.adamsite.projectadam.activity.MainActivity;
 import com.adamsite.projectadam.R;
 import com.adamsite.projectadam.model.VKAudio;
 import com.adamsite.projectadam.receiver.AudioIntentReceiver;
@@ -33,7 +35,8 @@ import java.util.List;
 
 public class AudioService extends Service implements
         MediaPlayer.OnPreparedListener,
-        MediaPlayer.OnCompletionListener {
+        MediaPlayer.OnCompletionListener,
+        IMusicFocusable{
 
     public static final String TAG_SESSION = "com.adamsite.projectadam.mediasession";
 
@@ -53,6 +56,7 @@ public class AudioService extends Service implements
     private MediaControllerCompat mMediaController;
     private PlaybackStateCompat mPlaybackState;
     private AudioIntentReceiver audioIntentReceiver;
+    private AudioFocusHelper mAudioFocusHelper;
 
     private WifiManager.WifiLock wifiLock;
 
@@ -65,6 +69,12 @@ public class AudioService extends Service implements
         public void onPlay() {
             Log.d("MediaPlayerService", "onPlay");
             Toast.makeText(getApplicationContext(), "onPlay", Toast.LENGTH_SHORT).show();
+
+            if (!mAudioFocusHelper.requestFocus()) {
+                Log.d("MediaPlayerService", "AudioFocus Request Failed");
+                Toast.makeText(getApplicationContext(), "AudioFocus Request Failed", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             switch (mPlaybackState.getState()) {
                 case PlaybackStateCompat.STATE_PAUSED:
@@ -118,6 +128,12 @@ public class AudioService extends Service implements
         public void onPause() {
             Log.d("MediaPlayerService", "onPause");
             Toast.makeText(getApplicationContext(), "onPause", Toast.LENGTH_SHORT).show();
+
+            if (!mAudioFocusHelper.abandonFocus()) {
+                Log.d("MediaPlayerService", "AudioFocus Request Failed");
+                Toast.makeText(getApplicationContext(), "AudioFocus Request Failed", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             switch (mPlaybackState.getState()) {
                 case PlaybackStateCompat.STATE_CONNECTING:
@@ -203,6 +219,17 @@ public class AudioService extends Service implements
 
         @Override
         public void onStop() {
+            Log.d("MediaPlayerService", "onStop");
+            Toast.makeText(getApplicationContext(), "onStop", Toast.LENGTH_SHORT).show();
+
+            if (!mAudioFocusHelper.abandonFocus()) {
+                Log.d("MediaPlayerService", "AudioFocus Request Failed");
+                Toast.makeText(getApplicationContext(), "AudioFocus Request Failed", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            unRegisterReceiver();
+
             mPlaybackState = new PlaybackStateCompat.Builder()
                     .setState(PlaybackStateCompat.STATE_STOPPED, 0, 0.0f)
                     .build();
@@ -211,10 +238,6 @@ public class AudioService extends Service implements
             if (wifiLock.isHeld()) {
                 wifiLock.release();
             }
-
-            Log.d("MediaPlayerService", "onStop");
-            Toast.makeText(getApplicationContext(), "onStop", Toast.LENGTH_SHORT).show();
-
             stopSelf();
         }
 
@@ -250,6 +273,46 @@ public class AudioService extends Service implements
     }
 
     @Override
+    public void onGainedAudioFocus() {
+        Log.d("MediaPlayerService", "onGainedAudioFocus");
+        Toast.makeText(getApplicationContext(), "onGainedAudioFocus", Toast.LENGTH_SHORT).show();
+        mMediaController.getTransportControls().play();
+        mMediaPlayer.setVolume(1.0f, 1.0f);
+        registerReceiver();
+    }
+
+    @Override
+    public void onLostAudioFocus(boolean canDuck) {
+        Log.d("MediaPlayerService", "onLostAudioFocus canDuck " + canDuck);
+        Toast.makeText(getApplicationContext(), "onLostAudioFocus canDuck " + canDuck, Toast.LENGTH_SHORT).show();
+        if (canDuck) {
+            mMediaPlayer.setVolume(0.1f, 0.1f);
+        } else {
+            mMediaController.getTransportControls().pause();
+            unRegisterReceiver();
+        }
+    }
+
+    private void registerReceiver() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        audioIntentReceiver = new AudioIntentReceiver();
+        try {
+            getApplicationContext().registerReceiver(audioIntentReceiver, intentFilter);
+        } catch (IllegalArgumentException e) {
+            Log.e("MediaPlayerService", "Cannot register receiver");
+        }
+    }
+
+    private void unRegisterReceiver() {
+        try {
+            getApplicationContext().unregisterReceiver(audioIntentReceiver);
+        } catch (IllegalArgumentException e) {
+            Log.e("MediaPlayerService", "Cannot unregister receiver");
+        }
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
         Log.d("MediaPlayerService", "onCreate");
@@ -257,10 +320,7 @@ public class AudioService extends Service implements
         wifiLock = ((WifiManager) getSystemService(Context.WIFI_SERVICE))
                 .createWifiLock(WifiManager.WIFI_MODE_FULL, "wifiLock");
 
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
-        audioIntentReceiver = new AudioIntentReceiver();
-        getApplicationContext().registerReceiver(audioIntentReceiver, intentFilter);
+        registerReceiver();
     }
 
     @Override
@@ -273,12 +333,12 @@ public class AudioService extends Service implements
                 .build();
         mMediaSession.setPlaybackState(mPlaybackState);
 
+        unRegisterReceiver();
         mMediaPlayer.release();
         mMediaSession.release();
         if (wifiLock.isHeld()) {
             wifiLock.release();
         }
-        getApplicationContext().unregisterReceiver(audioIntentReceiver);
         stopForeground(true);
     }
 
@@ -304,8 +364,10 @@ public class AudioService extends Service implements
     }
 
     private void initMediaSessions() {
-        Toast.makeText(getApplicationContext(), "init mediasession", Toast.LENGTH_SHORT).show();
         Log.d("MediaPlayerService", "init mediasession");
+        Toast.makeText(getApplicationContext(), "init mediasession", Toast.LENGTH_SHORT).show();
+
+        mAudioFocusHelper = new AudioFocusHelper(getApplicationContext(), this);
 
         ComponentName eventReceiver = new ComponentName(getApplicationContext().getPackageName(), AudioIntentReceiver.class.getName());
         PendingIntent buttonReceiverIntent = PendingIntent.getBroadcast(
