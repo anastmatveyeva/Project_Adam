@@ -15,18 +15,19 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
-import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.Toast;
 
+import com.adamsite.projectadam.Const;
+import com.adamsite.projectadam.R;
+import com.adamsite.projectadam.activity.MainActivity;
 import com.adamsite.projectadam.audiofocus.AudioFocusHelper;
 import com.adamsite.projectadam.audiofocus.IMusicFocusable;
-import com.adamsite.projectadam.activity.MainActivity;
-import com.adamsite.projectadam.R;
 import com.adamsite.projectadam.model.VKAudio;
 import com.adamsite.projectadam.receiver.AudioIntentReceiver;
 
@@ -237,7 +238,43 @@ public class AudioService extends Service implements
 
         @Override
         public void onSeekTo(long pos) {
+            Log.d("MediaPlayerService", "onSeekTo " + String.valueOf(pos));
             mMediaPlayer.seekTo((int)pos);
+        }
+
+        @Override
+        public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+            Log.d("MediaPlayerService", "onMediaButtonEvent");
+            if (mediaButtonEvent == null) {
+                return false;
+            }
+
+            KeyEvent keyEvent = (KeyEvent) mediaButtonEvent.getExtras().get(Intent.EXTRA_KEY_EVENT);
+            if (keyEvent != null) {
+                if (keyEvent.getAction() != KeyEvent.ACTION_DOWN) {
+                    return false;
+                }
+
+                switch (keyEvent.getKeyCode()) {
+                    case KeyEvent.KEYCODE_MEDIA_PLAY:
+                        onPlay();
+                        break;
+                    case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                        onPause();
+                        break;
+                    case KeyEvent.KEYCODE_MEDIA_STOP:
+                        onStop();
+                        break;
+                    case KeyEvent.KEYCODE_MEDIA_NEXT:
+                        onSkipToNext();
+                        break;
+                    case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                        onSkipToPrevious();
+                        break;
+                }
+                return true;
+            }
+            return false;
         }
     };
 
@@ -279,17 +316,14 @@ public class AudioService extends Service implements
     public void onLostAudioFocus(boolean canDuck) {
         Log.d("MediaPlayerService", "onLostAudioFocus canDuck " + canDuck);
         Toast.makeText(getApplicationContext(), "onLostAudioFocus canDuck " + canDuck, Toast.LENGTH_SHORT).show();
-        if (canDuck) {
-            mMediaPlayer.setVolume(0.1f, 0.1f);
-        } else {
-            mMediaController.getTransportControls().pause();
-            unRegisterReceiver();
-        }
+        mMediaController.getTransportControls().pause();
+        unRegisterReceiver();
     }
 
     private void registerReceiver() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        intentFilter.addAction(Intent.ACTION_MEDIA_BUTTON);
         audioIntentReceiver = new AudioIntentReceiver();
         try {
             getApplicationContext().registerReceiver(audioIntentReceiver, intentFilter);
@@ -312,7 +346,7 @@ public class AudioService extends Service implements
         Log.d("MediaPlayerService", "onCreate");
 
         wifiLock = ((WifiManager) getSystemService(Context.WIFI_SERVICE))
-                .createWifiLock(WifiManager.WIFI_MODE_FULL, "wifiLock");
+                .createWifiLock(WifiManager.WIFI_MODE_FULL, Const.WIFI_LOCK);
 
         registerReceiver();
     }
@@ -384,11 +418,12 @@ public class AudioService extends Service implements
                 .build();
 
         mMediaSession = new MediaSessionCompat(getApplicationContext(), TAG_SESSION, eventReceiver, buttonReceiverIntent);
-//        mMediaSession.setPlaybackToLocal(AudioManager.STREAM_MUSIC);
         mMediaSession.setPlaybackState(mPlaybackState);
+//        mMediaSession.setMediaButtonReceiver(buttonReceiverIntent);
         mMediaSession.setActive(true);
-        mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS |
-                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS);
+        mMediaSession.setFlags(
+                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
+                | MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS);
         mMediaSession.setCallback(mMediaSessionCallback);
 
         mMediaPlayer = new MediaPlayer();
@@ -408,7 +443,7 @@ public class AudioService extends Service implements
             return;
         }
 
-        MediaButtonReceiver.handleIntent(mMediaSession, intent);
+//        MediaButtonReceiver.handleIntent(mMediaSession, intent);
 
         switch (intent.getAction()) {
             case ACTION_PLAY:

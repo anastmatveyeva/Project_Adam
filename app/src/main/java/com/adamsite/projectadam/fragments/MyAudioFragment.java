@@ -82,6 +82,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity().getApplicationContext());
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.addItemDecoration(new RecyclerViewAdapter.DividerItemDecoration(getActivity()));
         recyclerView.setHasFixedSize(true);
 
         recyclerViewAdapter = new RecyclerViewAdapter();

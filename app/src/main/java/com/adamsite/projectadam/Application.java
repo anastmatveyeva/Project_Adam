@@ -1,6 +1,7 @@
 package com.adamsite.projectadam;
 
 import android.content.Intent;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.adamsite.projectadam.activity.MainActivity;
@@ -14,6 +15,7 @@ public class Application extends android.app.Application {
         @Override
         public void onVKAccessTokenChanged(VKAccessToken oldToken, VKAccessToken newToken) {
             if (newToken == null) {
+                Log.i(Const.LOG_TAG_APP, getResources().getString(R.string.access_token_invalidated));
                 Toast.makeText(Application.this, R.string.access_token_invalidated, Toast.LENGTH_LONG).show();
                 Intent intent = new Intent(Application.this, MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);

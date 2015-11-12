@@ -26,5 +26,5 @@ public class Const {
     public static final String LOGOUT_FRAGMENT = "logout_fragment";
 
     //wifiLockTag
-    public static final String WIFI_LOCK = "media_player_wifi_lock";
+    public static final String WIFI_LOCK = "audio_service_wifi_lock";
 }

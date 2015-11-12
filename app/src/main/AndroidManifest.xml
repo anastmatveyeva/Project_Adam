@@ -33,9 +33,6 @@
 
         <service
             android:name=".service.AudioService">
-            <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
-            </intent-filter>
         </service>
     </application>
 
