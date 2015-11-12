@@ -129,12 +129,6 @@ public class AudioService extends Service implements
             Log.d("MediaPlayerService", "onPause");
             Toast.makeText(getApplicationContext(), "onPause", Toast.LENGTH_SHORT).show();
 
-            if (!mAudioFocusHelper.abandonFocus()) {
-                Log.d("MediaPlayerService", "AudioFocus Request Failed");
-                Toast.makeText(getApplicationContext(), "AudioFocus Request Failed", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
             switch (mPlaybackState.getState()) {
                 case PlaybackStateCompat.STATE_CONNECTING:
                 case PlaybackStateCompat.STATE_PLAYING:
