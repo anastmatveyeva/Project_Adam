@@ -1,6 +1,4 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
         <item
@@ -13,7 +11,8 @@
             android:id="@+id/action_settings"
             android:orderInCategory="200"
             android:title="@string/action_settings"
-            android:icon="@drawable/ic_settings_black_24dp"/>
+            android:icon="@drawable/ic_settings_black_24dp"
+            android:enabled="false"/>
 
         <item
             android:id="@+id/action_vk_login"

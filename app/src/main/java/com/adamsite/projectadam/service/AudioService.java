@@ -37,12 +37,14 @@ import java.util.List;
 public class AudioService extends Service implements
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnCompletionListener,
+        MediaPlayer.OnErrorListener,
         IMusicFocusable{
 
     public static final String TAG_SESSION = "com.adamsite.projectadam.mediasession";
 
     public static final String ACTION_PLAY = "com.adamsite.projectadam.action.play";
     public static final String ACTION_PAUSE = "com.adamsite.projectadam.action.pause";
+    public static final String ACTION_PLAY_PAUSE = "com.adamsite.projectadam.action.play_pause";
     public static final String ACTION_REWIND = "com.adamsite.projectadam.action.rewind";
     public static final String ACTION_FAST_FORWARD = "com.adamsite.projectadam.action.fast_forward";
     public static final String ACTION_NEXT = "com.adamsite.projectadam.action.next";
@@ -256,6 +258,17 @@ public class AudioService extends Service implements
                 }
 
                 switch (keyEvent.getKeyCode()) {
+                    case KeyEvent.KEYCODE_HEADSETHOOK:
+                    case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                        switch (mPlaybackState.getState()) {
+                            case PlaybackStateCompat.STATE_PLAYING:
+                                onPause();
+                                break;
+                            case PlaybackStateCompat.STATE_PAUSED:
+                                onPlay();
+                                break;
+                        }
+                        break;
                     case KeyEvent.KEYCODE_MEDIA_PLAY:
                         onPlay();
                         break;
@@ -301,6 +314,16 @@ public class AudioService extends Service implements
                 mMediaController.getTransportControls().skipToNext();
                 break;
         }
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra) {
+        mPlaybackState = new PlaybackStateCompat.Builder()
+                .setState(PlaybackStateCompat.STATE_ERROR, 0, 0.0f)
+                .build();
+        mMediaSession.setPlaybackState(mPlaybackState);
+        buildNotification(generateAction(R.drawable.ic_play_arrow_white_24dp, "Play", ACTION_PLAY));
+        return false;
     }
 
     @Override
@@ -408,8 +431,8 @@ public class AudioService extends Service implements
         mPlaybackState = new PlaybackStateCompat.Builder()
                 .setActions(
                         PlaybackStateCompat.ACTION_PLAY
-                        | PlaybackStateCompat.ACTION_PLAY_PAUSE
                         | PlaybackStateCompat.ACTION_PAUSE
+                        | PlaybackStateCompat.ACTION_PLAY_PAUSE
                         | PlaybackStateCompat.ACTION_STOP
                         | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
                         | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
@@ -451,6 +474,16 @@ public class AudioService extends Service implements
                 break;
             case ACTION_PAUSE:
                 mMediaController.getTransportControls().pause();
+                break;
+            case ACTION_PLAY_PAUSE:
+                switch (mPlaybackState.getState()) {
+                    case PlaybackStateCompat.STATE_PLAYING:
+                        mMediaController.getTransportControls().pause();
+                        break;
+                    case PlaybackStateCompat.STATE_PAUSED:
+                        mMediaController.getTransportControls().play();
+                        break;
+                }
                 break;
             case ACTION_FAST_FORWARD:
                 mMediaController.getTransportControls().fastForward();
@@ -521,6 +554,7 @@ public class AudioService extends Service implements
         switch (mPlaybackState.getState()) {
             case PlaybackStateCompat.STATE_ERROR:
             case PlaybackStateCompat.STATE_PAUSED:
+                builder.setSmallIcon(R.drawable.ic_pause_white_24dp);
                 stopForeground(false);
                 break;
             default:

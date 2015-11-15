@@ -95,7 +95,7 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements
             recyclerViewAdapter.addAll(myAudioList);
             Toast.makeText(getContext(), "loaded from bundle " + recyclerViewAdapter.getRealItemCount(), Toast.LENGTH_SHORT).show();
         } else {
-            myAudioShow();
+            audioGet();
         }
     }
 
@@ -110,12 +110,12 @@ public class MyAudioFragment extends android.support.v4.app.Fragment implements
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                myAudioShow();
+                audioGet();
             }
         });
     }
 
-    public void myAudioShow() {
+    public void audioGet() {
         VKRequest request = VKApi.audio().get();
         request.executeWithListener(rlMyAudioShow);
     }
